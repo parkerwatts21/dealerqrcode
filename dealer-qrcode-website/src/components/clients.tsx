@@ -1,5 +1,4 @@
 import Image from 'next/image'
-import { cn } from "@/lib/utils"
 import { Marquee } from "@/registry/magicui/marquee"
 
 const logos = [
