@@ -17,13 +17,12 @@ export default function Payments() {
       <div className="mx-auto max-w-7xl px-6 lg:px-8 pt-28 lg:pt-32 pb-24">
         {/* Pricing Header */}
         <div className="text-center mb-16 lg:mb-20">
-          <h2 className="text-indigo-600 font-semibold mb-3">Pricing</h2>
+          <h2 className="text-blue-500 font-semibold mb-3">Pricing</h2>
           <h1 className="font-display tracking-tight text-4xl font-medium sm:text-5xl text-neutral-950 mb-6">
             Choose the right plan for you
           </h1>
           <p className="mx-auto max-w-2xl text-lg text-neutral-600">
             Select a plan that drives your dealership forward with powerful QR code technology. 
-            Enhance vehicle listings, boost test drives, and create a seamless experience for your customers.
           </p>
         </div>
         
