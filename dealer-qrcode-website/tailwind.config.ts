@@ -88,10 +88,20 @@ const config = {
             opacity: "1",
           },
         },
+        marquee: {
+          from: { transform: "translateX(0)" },
+          to: { transform: "translateX(calc(-100% - var(--gap)))" },
+        },
+        "marquee-vertical": {
+          from: { transform: "translateY(0)" },
+          to: { transform: "translateY(calc(-100% - var(--gap)))" },
+        },
       },
       animation: {
         "fade-up": "fade-up 0.7s ease-out forwards",
         "fade-in": "fade-in 0.7s ease-in-out forwards",
+        "marquee": "marquee var(--duration) linear infinite",
+        "marquee-vertical": "marquee-vertical var(--duration) linear infinite",
       },
       fontFamily: {
         display: ["var(--font-inter)", "system-ui", "sans-serif"],

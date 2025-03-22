@@ -1,38 +1,45 @@
 import Image from 'next/image'
+import { cn } from "@/lib/utils"
+import { Marquee } from "@/registry/magicui/marquee"
+
+const logos = [
+  { src: '/images/MatrixMotors.png', alt: 'Matrix Motors' },
+  { src: '/images/drivedeals.png', alt: 'Drive Deals' },
+  { src: '/images/wadeautogroup.png', alt: 'Wade Auto Group' },
+  { src: '/images/andersonmotors.png', alt: 'Anderson Motor' },
+]
+
+const LogoItem = ({ src, alt }: { src: string; alt: string }) => {
+  return (
+    <div className="mx-8 flex h-16 w-48 items-center justify-center">
+      <Image 
+        src={src} 
+        alt={alt} 
+        width={158} 
+        height={48} 
+        className="h-10 w-auto object-contain" 
+      />
+    </div>
+  )
+}
 
 export function Clients() {
   return (
-    <div className="mt-24 rounded-4xl bg-neutral-100 py-20 sm:mt-32 sm:py-32 lg:mt-56">
+    <div className="py-24 sm:py-32 rounded-4xl mt-24 sm:mt-32 lg:mt-36">
       <div className="mx-auto max-w-7xl px-6 lg:px-8">
-        <div className="mx-auto max-w-2xl lg:max-w-none">
-          <div className="flex items-center gap-x-8 opacity-0 transform translate-y-6 animate-fade-up [animation-fill-mode:forwards]">
-            <h2 className="text-center font-display text-sm font-semibold tracking-wider text-neutral-950 sm:text-left">
-              Trusted by leading dealerships nationwide
-            </h2>
-            <div className="h-px flex-auto bg-neutral-300"></div>
-          </div>
-          <div>
-            <ul role="list" className="mt-10 grid grid-cols-2 gap-x-8 gap-y-10 lg:grid-cols-4">
-              {[
-                { name: 'AutoNation', logo: '/images/autonation.svg' },
-                { name: 'CarMax', logo: '/images/carmax.svg' },
-                { name: 'Lithia Motors', logo: '/images/lithia.svg' },
-                { name: 'Hendrick Automotive', logo: '/images/hendrick.svg' },
-                { name: 'Penske Automotive', logo: '/images/penske.svg' },
-                { name: 'Group 1 Automotive', logo: '/images/group1.svg' },
-                { name: 'Sonic Automotive', logo: '/images/sonic.svg' },
-                { name: 'Asbury Automotive', logo: '/images/asbury.svg' },
-              ].map((client) => (
-                <li key={client.name}>
-                  <div className="opacity-0 transform translate-y-6 animate-fade-up [animation-fill-mode:forwards] [animation-delay:0.1s]">
-                    <div className="h-8 text-neutral-950 font-medium">
-                      {client.name}
-                    </div>
-                  </div>
-                </li>
-              ))}
-            </ul>
-          </div>
+        <h2 className="text-center text-lg font-semibold mb-10">
+          Trusted by leading dealerships nationwide
+        </h2>
+        
+        <div className="relative flex w-full flex-col items-center justify-center overflow-hidden">
+          <Marquee pauseOnHover repeat={10}>
+            {logos.map((logo, index) => (
+              <LogoItem key={index} {...logo} />
+            ))}
+          </Marquee>
+          
+          <div className="pointer-events-none absolute inset-y-0 left-0 w-1/6 bg-gradient-to-r from-white"></div>
+          <div className="pointer-events-none absolute inset-y-0 right-0 w-1/6 bg-gradient-to-l from-white"></div>
         </div>
       </div>
     </div>
