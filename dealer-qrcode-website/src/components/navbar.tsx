@@ -20,7 +20,7 @@ export function Navbar() {
           </div>
           <div className="flex items-center gap-x-5">
             <a 
-              href="mailto:sales@dealerqrcode.com" 
+              href="mailto:scottyta@gmail.com" 
               className="hidden lg:block rounded-full bg-neutral-950 px-4 py-2.5 text-md font-semibold text-white hover:bg-neutral-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-neutral-950"
             >
               Contact us

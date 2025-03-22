@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import nodemailer from 'nodemailer';
+import sgMail from '@sendgrid/mail';
 
 export async function POST(request: Request) {
   try {
@@ -14,17 +14,21 @@ export async function POST(request: Request) {
       );
     }
 
-    // Configure transporter (for testing, using Ethereal)
-    // In production, replace with your actual email service
-    const transporter = nodemailer.createTransport({
-      host: 'smtp.gmail.com',
-      port: 587,
-      secure: false,
-      auth: {
-        user: process.env.EMAIL_USER || 'your-email@gmail.com', // replace with environment variable
-        pass: process.env.EMAIL_PASS || 'your-app-specific-password', // replace with environment variable
-      },
-    });
+    // SendGrid configuration validation
+    const sendgridApiKey = process.env.SENDGRID_API_KEY;
+    const fromEmail = process.env.FROM_EMAIL;
+    const toEmail = process.env.TO_EMAIL;
+    
+    if (!sendgridApiKey || !fromEmail || !toEmail) {
+      console.error('Missing SendGrid configuration. Please set SENDGRID_API_KEY, FROM_EMAIL, and TO_EMAIL environment variables.');
+      return NextResponse.json(
+        { error: 'Server configuration error' },
+        { status: 500 }
+      );
+    }
+
+    // Set SendGrid API key
+    sgMail.setApiKey(sendgridApiKey);
 
     // Email content
     const emailContent = `
@@ -35,13 +39,17 @@ export async function POST(request: Request) {
       <p><strong>Message:</strong> ${message || 'No message provided'}</p>
     `;
 
-    // Send email
-    await transporter.sendMail({
-      from: '"Dealer QRCode Website" <noreply@dealerqrcode.com>',
-      to: 'parkerwatts21@gmail.com',
+    // Create email message
+    const msg = {
+      to: toEmail,
+      from: fromEmail,
+      replyTo: email,
       subject: 'New Inquiry from Dealer QRCode Website',
       html: emailContent,
-    });
+    };
+
+    // Send email
+    await sgMail.send(msg);
 
     return NextResponse.json({ success: true });
   } catch (error) {
