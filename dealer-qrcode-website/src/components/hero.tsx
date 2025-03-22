@@ -29,10 +29,11 @@ export function Hero() {
                 Get started
               </Link>
               <Link
-                href="/demo"
+                href="https://buy.stripe.com/3cs5nf9w2gvs4E0dQR"
+                target="_blank"
                 className="rounded-full px-4 py-2.5 text-md font-semibold text-neutral-950 ring-1 ring-inset ring-neutral-950/10 hover:bg-neutral-50 hover:ring-neutral-950/15 focus:outline-none focus:ring-2 focus:ring-neutral-950 focus:ring-offset-2"
               >
-                View demo <span aria-hidden="true">→</span>
+                Subscribe now <span aria-hidden="true">→</span>
               </Link>
             </div>
           </div>
