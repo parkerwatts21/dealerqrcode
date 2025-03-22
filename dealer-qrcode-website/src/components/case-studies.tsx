@@ -25,8 +25,8 @@ export function CaseStudies() {
       <div className="mx-auto max-w-7xl px-6 lg:px-8 mt-16">
         <div className="mx-auto max-w-2xl lg:max-w-none">
           <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
-            <div className="flex bg-white transform translate-y-6 animate-fade-up [animation-fill-mode:forwards]">
-              <article className="relative flex w-full flex-col rounded-3xl p-6 ring-1 ring-neutral-200 transition hover:bg-neutral-50 sm:p-8">
+            <div className="flex transform translate-y-6 animate-fade-up [animation-fill-mode:forwards]">
+              <article className="relative bg-neutral-100 flex w-full flex-col rounded-3xl p-6 ring-1 ring-neutral-200 transition hover:bg-neutral-200 sm:p-8">
                 <h3>
                   <Link href="/case-studies/inventory-management">
                     <span className="absolute inset-0 rounded-3xl"></span>
@@ -50,8 +50,8 @@ export function CaseStudies() {
               </article>
             </div>
 
-            <div className="flex bg-white transform translate-y-6 animate-fade-up [animation-delay:0.1s] [animation-fill-mode:forwards]">
-              <article className="relative flex w-full flex-col rounded-3xl p-6 ring-1 ring-neutral-200 transition hover:bg-neutral-50 sm:p-8">
+            <div className="flex transform translate-y-6 animate-fade-up [animation-delay:0.1s] [animation-fill-mode:forwards]">
+              <article className="relative bg-neutral-100 flex w-full flex-col rounded-3xl p-6 ring-1 ring-neutral-200 transition hover:bg-neutral-200 sm:p-8">
                 <h3>
                   <Link href="/case-studies/customer-experience">
                     <span className="absolute inset-0 rounded-3xl"></span>
@@ -75,8 +75,8 @@ export function CaseStudies() {
               </article>
             </div>
 
-            <div className="flex bg-white transform translate-y-6 animate-fade-up [animation-delay:0.2s] [animation-fill-mode:forwards]">
-              <article className="relative flex w-full flex-col rounded-3xl p-6 ring-1 ring-neutral-200 transition hover:bg-neutral-50 sm:p-8">
+            <div className="flex transform translate-y-6 animate-fade-up [animation-delay:0.2s] [animation-fill-mode:forwards]">
+              <article className="relative bg-neutral-100 flex w-full flex-col rounded-3xl p-6 ring-1 ring-neutral-200 transition hover:bg-neutral-200 sm:p-8">
                 <h3>
                   <Link href="/case-studies/sales-acceleration">
                     <span className="absolute inset-0 rounded-3xl"></span>

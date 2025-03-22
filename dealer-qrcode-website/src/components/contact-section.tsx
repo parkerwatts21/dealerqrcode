@@ -35,17 +35,8 @@ export function ContactSection() {
                   <div>
                     <p className="text-sm not-italic text-neutral-950">
                       <strong className="font-semibold">Headquarters</strong><br />
-                      8521 Auto Park Drive<br />
-                      Suite 300<br />
-                      San Diego, CA 92121
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-sm not-italic text-neutral-950">
-                      <strong className="font-semibold">East Coast Office</strong><br />
-                      1200 Dealership Way<br />
-                      Floor 4<br />
-                      Charlotte, NC 28202
+                      412 West Rivers Edge Drive<br />
+                      Provo, UT 84604
                     </p>
                   </div>
                 </div>
