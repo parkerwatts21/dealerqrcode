@@ -1,5 +1,8 @@
 import React from 'react'
 import Link from 'next/link'
+import { FaQrcode } from 'react-icons/fa'
+import { MdDashboard } from 'react-icons/md'
+import { AiFillCar } from 'react-icons/ai'
 
 export function CaseStudies() {
   return (
@@ -14,7 +17,7 @@ export function CaseStudies() {
             </h2>
             <div className="mt-6 text-xl text-neutral-600">
               <p>
-                Our QR code system revolutionizes how dealerships manage inventory and serve customers.
+                Our QR code system revolutionizes how dealerships interact and serve customers.
                 With a simple scan, staff and customers alike can access comprehensive vehicle information instantly.
               </p>
             </div>
@@ -28,24 +31,19 @@ export function CaseStudies() {
             <div className="flex transform translate-y-6 animate-fade-up [animation-fill-mode:forwards]">
               <article className="relative bg-neutral-100 flex w-full flex-col rounded-3xl p-6 ring-1 ring-neutral-200 transition hover:bg-neutral-200 sm:p-8">
                 <h3>
-                  <Link href="/case-studies/inventory-management">
-                    <span className="absolute inset-0 rounded-3xl"></span>
-                    <svg viewBox="0 0 24 24" fill="none" className="h-16 w-16">
-                      <rect width="24" height="24" rx="12" fill="#000" />
-                      <path d="M8 12h8M12 8v8" stroke="#fff" strokeWidth="1.5" strokeLinecap="round" />
-                    </svg>
-                  </Link>
+                  <span className="absolute inset-0 rounded-3xl"></span>
+                  <div className="flex h-16 w-16 items-center justify-center rounded-full bg-white">
+                    <FaQrcode className="h-8 w-8 text-black" />
+                  </div>
                 </h3>
                 <p className="mt-6 flex gap-x-2 text-sm text-neutral-950">
-                  <time dateTime="2023" className="font-semibold">2023</time>
-                  <span className="text-neutral-300" aria-hidden="true">/</span>
-                  <span>Case study</span>
+                  <span className="font-semibold text-blue-500">Current Feature</span>
                 </p>
                 <p className="mt-6 font-display text-2xl font-semibold text-neutral-950">
-                  Inventory management simplified
+                  Custom QR Code Labels
                 </p>
                 <p className="mt-4 text-base text-neutral-600">
-                  How Matthews Auto Group reduced inventory processing time by 65% and eliminated paperwork errors using QR codes.
+                  Print custom QR code labels for your vehicles directly from our Chrome Extension. When customers scan these codes, they're instantly redirected to your website.
                 </p>
               </article>
             </div>
@@ -53,24 +51,19 @@ export function CaseStudies() {
             <div className="flex transform translate-y-6 animate-fade-up [animation-delay:0.1s] [animation-fill-mode:forwards]">
               <article className="relative bg-neutral-100 flex w-full flex-col rounded-3xl p-6 ring-1 ring-neutral-200 transition hover:bg-neutral-200 sm:p-8">
                 <h3>
-                  <Link href="/case-studies/customer-experience">
-                    <span className="absolute inset-0 rounded-3xl"></span>
-                    <svg viewBox="0 0 24 24" fill="none" className="h-16 w-16">
-                      <rect width="24" height="24" rx="12" fill="#000" />
-                      <path d="M12 7v4l2 2M17 12a5 5 0 1 1-10 0 5 5 0 0 1 10 0Z" stroke="#fff" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                    </svg>
-                  </Link>
+                  <span className="absolute inset-0 rounded-3xl"></span>
+                  <div className="flex h-16 w-16 items-center justify-center rounded-full bg-white">
+                    <MdDashboard className="h-8 w-8 text-black" />
+                  </div>
                 </h3>
                 <p className="mt-6 flex gap-x-2 text-sm text-neutral-950">
-                  <time dateTime="2023" className="font-semibold">2023</time>
-                  <span className="text-neutral-300" aria-hidden="true">/</span>
-                  <span>Case study</span>
+                  <span className="font-semibold text-blue-500">Coming Soon!</span>
                 </p>
                 <p className="mt-6 font-display text-2xl font-semibold text-neutral-950">
-                  Enhanced customer experience
+                  Smart Tracking Dashboard
                 </p>
                 <p className="mt-4 text-base text-neutral-600">
-                  How Riverside Motors increased customer satisfaction by 47% by providing instant vehicle information through QR codes.
+                  Track customer scans with our comprehensive dashboard. Our built-in AI tool automatically drafts personalized follow-up emails to potential customers.
                 </p>
               </article>
             </div>
@@ -78,24 +71,19 @@ export function CaseStudies() {
             <div className="flex transform translate-y-6 animate-fade-up [animation-delay:0.2s] [animation-fill-mode:forwards]">
               <article className="relative bg-neutral-100 flex w-full flex-col rounded-3xl p-6 ring-1 ring-neutral-200 transition hover:bg-neutral-200 sm:p-8">
                 <h3>
-                  <Link href="/case-studies/sales-acceleration">
-                    <span className="absolute inset-0 rounded-3xl"></span>
-                    <svg viewBox="0 0 24 24" fill="none" className="h-16 w-16">
-                      <rect width="24" height="24" rx="12" fill="#000" />
-                      <path d="m7 13 3 3 7-7" stroke="#fff" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                    </svg>
-                  </Link>
+                  <span className="absolute inset-0 rounded-3xl"></span>
+                  <div className="flex h-16 w-16 items-center justify-center rounded-full bg-white">
+                    <AiFillCar className="h-8 w-8 text-black" />
+                  </div>
                 </h3>
                 <p className="mt-6 flex gap-x-2 text-sm text-neutral-950">
-                  <time dateTime="2022" className="font-semibold">2022</time>
-                  <span className="text-neutral-300" aria-hidden="true">/</span>
-                  <span>Case study</span>
+                  <span className="font-semibold text-blue-500">Coming Soon!</span>
                 </p>
                 <p className="mt-6 font-display text-2xl font-semibold text-neutral-950">
-                  Sales cycle acceleration
+                  Test Drive Signup
                 </p>
                 <p className="mt-4 text-base text-neutral-600">
-                  How Suncoast Auto reduced their sales cycle by 35% by implementing QR codes that streamlined vehicle research and financing.
+                  When customers scan your QR codes, they'll be presented with an option to schedule a test drive directly from their mobile device.
                 </p>
               </article>
             </div>
