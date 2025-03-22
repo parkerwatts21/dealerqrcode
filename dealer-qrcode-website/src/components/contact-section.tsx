@@ -10,11 +10,15 @@ export function ContactSection() {
     message: '',
     dealershipSize: 'Less than 50 vehicles'
   });
-  const [errors, setErrors] = useState({});
+  const [errors, setErrors] = useState<{
+    fullName?: string;
+    email?: string;
+    [key: string]: string | undefined;
+  }>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitSuccess, setSubmitSuccess] = useState(false);
 
-  const handleChange = (e) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setFormData({
       ...formData,
@@ -47,7 +51,7 @@ export function ContactSection() {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     
     if (!validateForm()) {
