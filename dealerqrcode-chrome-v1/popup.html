@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>QR Code Generator</title>
+  <meta charset="utf-8">
+  <link rel="stylesheet" href="styles.css">
+  <script src="qrcode.min.js"></script>
+</head>
+<body>
+  <div class="container">
+    <h1>QR Code Generator</h1>
+    
+    <div class="options">
+      <div class="field">
+        <label for="title">Vehicle Title:</label>
+        <input type="text" id="title" placeholder="e.g. 2020 PORSCHE CAYENNE AWD">
+      </div>
+      
+      <div class="field">
+        <label for="stock">Stock Number:</label>
+        <input type="text" id="stock" placeholder="e.g. A00570">
+      </div>
+      
+      <div class="field">
+        <label for="miles">Miles:</label>
+        <input type="text" id="miles" placeholder="e.g. 40,277">
+      </div>
+      
+      <div class="field">
+        <label for="dealer">Dealership Name:</label>
+        <input type="text" id="dealer" placeholder="e.g. ANDERSON MOTOR">
+      </div>
+      
+      <div class="field">
+        <label for="scanText">QR Scan Text:</label>
+        <input type="text" id="scanText" value="SCAN ME" placeholder="Scan instruction">
+      </div>
+      
+      <div class="field">
+        <label for="subText">QR Sub-Text:</label>
+        <input type="text" id="subText" value="FOR INFO + PRICE" placeholder="Additional information">
+      </div>
+    </div>
+    
+    <div class="actions">
+      <button id="generate">Generate QR Code</button>
+      <button id="download">Download PDF</button>
+    </div>
+    
+    <div id="preview" class="preview-container">
+      <div class="qr-sheet">
+        <div class="vehicle-info">
+          <h2 id="preview-title">2020 PORSCHE<br>CAYENNE AWD</h2>
+          <div class="details">
+            <span class="detail-item"><b>STOCK:</b> <span id="preview-stock">A00570</span></span>
+            <span class="detail-item"><b>MILES:</b> <span id="preview-miles">40,277</span></span>
+          </div>
+        </div>
+        
+        <div class="qr-container">
+          <div class="qr-header">
+            <span id="preview-scan-text">SCAN ME</span>
+            <span id="preview-sub-text">FOR INFO + PRICE</span>
+          </div>
+          <div id="qrcode"></div>
+        </div>
+        
+        <!-- In your HTML where the dealer info appears -->
+        <div class="dealer-info">
+          <div id="preview-dealer">ANDERSON<br>MOTOR</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="html2canvas.min.js"></script>
+  <script src="./node_modules/jspdf/dist/jspdf.umd.min.js"></script>
+  <script src="popup.js"></script>
+</body>
+</html>

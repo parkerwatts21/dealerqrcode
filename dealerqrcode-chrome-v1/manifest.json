@@ -1,0 +1,13 @@
+{
+    "manifest_version": 3,
+    "name": "Professional QR Code Generator",
+    "description": "Generate professional-looking QR codes for any webpage with custom styling",
+    "version": "1.0",
+    "action": {
+      "default_popup": "popup.html"
+    },
+    "permissions": ["activeTab", "scripting", "downloads"],
+    "content_security_policy": {
+        "extension_pages": "script-src 'self'; object-src 'self'"
+    }
+  }
