@@ -11,9 +11,9 @@ export function ContactSection() {
     dealershipSize: 'Less than 50 vehicles'
   });
   const [errors, setErrors] = useState<{
-    fullName?: string;
-    email?: string;
-    [key: string]: string | undefined;
+    fullName?: string | null;
+    email?: string | null;
+    [key: string]: string | null | undefined;
   }>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitSuccess, setSubmitSuccess] = useState(false);
@@ -35,7 +35,11 @@ export function ContactSection() {
   };
 
   const validateForm = () => {
-    const newErrors = {};
+    const newErrors: {
+      fullName?: string | null;
+      email?: string | null;
+      [key: string]: string | null | undefined;
+    } = {};
     
     if (!formData.fullName.trim()) {
       newErrors.fullName = 'Full name is required';
