@@ -112,7 +112,7 @@ export function ContactSection() {
               </div>
               <div className="mt-10 flex">
                 <Link
-                  href="/contact"
+                  href="/payments"
                   className="rounded-full bg-neutral-950 px-4 py-2.5 text-md font-semibold text-white hover:bg-neutral-800 focus:outline-none focus:ring-2 focus:ring-neutral-950 focus:ring-offset-2"
                 >
                   Get started <span aria-hidden="true">→</span>

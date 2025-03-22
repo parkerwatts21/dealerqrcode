@@ -23,7 +23,7 @@ export function Hero() {
             </div>
             <div className="mt-10 flex gap-6">
               <Link
-                href="/contact"
+                href="/payments"
                 className="rounded-full bg-neutral-950 px-4 py-2.5 text-md font-semibold text-white hover:bg-neutral-800 focus:outline-none focus:ring-2 focus:ring-neutral-950 focus:ring-offset-2"
               >
                 Get started
@@ -38,7 +38,7 @@ export function Hero() {
           </div>
 
           {/* Right column - Video */}
-          <div className="opacity-0 transform translate-y-8 animate-fade-up [animation-delay:0.2s] [animation-fill-mode:forwards] relative mt-8 lg:mt-0">
+          <div className="opacity-0 transform translate-y-8 animate-fade-up [animation-delay:0.2s] [animation-fill-mode:forwards] relative md:mt-[-80px] lg:mt-[-80px]">
             <div className="rounded-4xl overflow-hidden bg-neutral-100 sm:rounded-[2.5rem] shadow-lg max-h-[400px]">
               <video 
                 className="w-full h-auto max-h-[400px]"
