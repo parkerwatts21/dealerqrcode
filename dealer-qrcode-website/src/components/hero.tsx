@@ -6,7 +6,7 @@ export function Hero() {
     <div className="relative">
       {/* QR code-inspired corner brackets - darker and bottom ones positioned lower */}
 
-      <div className="mx-auto max-w-7xl px-6 lg:px-8 pt-38 sm:pt-60 lg:pt-40">
+      <div className="mx-auto max-w-7xl px-6 lg:px-8 pt-38 sm:pt-60 lg:pt-46">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
           {/* Left column - Text content */}
           <div className="max-w-3xl opacity-0 transform translate-y-6 animate-fade-up [animation-fill-mode:forwards] relative z-10">

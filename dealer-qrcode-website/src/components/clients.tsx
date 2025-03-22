@@ -25,9 +25,9 @@ const LogoItem = ({ src, alt }: { src: string; alt: string }) => {
 
 export function Clients() {
   return (
-    <div className="py-24 sm:py-32 rounded-4xl mt-24 sm:mt-32 lg:mt-36">
+    <div className="bg-neutral-900 rounded-xl py-12 mt-40">
       <div className="mx-auto max-w-7xl px-6 lg:px-8">
-        <h2 className="text-center text-lg font-semibold mb-10">
+        <h2 className="text-center text-lg font-semibold mb-10 text-white">
           Trusted by leading dealerships nationwide
         </h2>
         
@@ -38,8 +38,8 @@ export function Clients() {
             ))}
           </Marquee>
           
-          <div className="pointer-events-none absolute inset-y-0 left-0 w-1/6 bg-gradient-to-r from-white"></div>
-          <div className="pointer-events-none absolute inset-y-0 right-0 w-1/6 bg-gradient-to-l from-white"></div>
+          <div className="pointer-events-none absolute inset-y-0 left-0 w-1/6 bg-gradient-to-r from-neutral-900"></div>
+          <div className="pointer-events-none absolute inset-y-0 right-0 w-1/6 bg-gradient-to-l from-neutral-900"></div>
         </div>
       </div>
     </div>
