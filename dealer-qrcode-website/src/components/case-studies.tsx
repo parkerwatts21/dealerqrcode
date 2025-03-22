@@ -1,5 +1,4 @@
 import React from 'react'
-import Link from 'next/link'
 import { FaQrcode } from 'react-icons/fa'
 import { MdDashboard } from 'react-icons/md'
 import { AiFillCar } from 'react-icons/ai'
@@ -43,7 +42,7 @@ export function CaseStudies() {
                   Custom QR Code Labels
                 </p>
                 <p className="mt-4 text-base text-neutral-600">
-                  Print custom QR code labels for your vehicles directly from our Chrome Extension. When customers scan these codes, they're instantly redirected to your website.
+                  Print custom QR code labels for your vehicles directly from our Chrome Extension. When customers scan these codes, they&apos;re instantly redirected to your website.
                 </p>
               </article>
             </div>
@@ -83,7 +82,7 @@ export function CaseStudies() {
                   Test Drive Signup
                 </p>
                 <p className="mt-4 text-base text-neutral-600">
-                  When customers scan your QR codes, they'll be presented with an option to schedule a test drive directly from their mobile device.
+                  When customers scan your QR codes, they&apos;ll be presented with an option to schedule a test drive directly from their mobile device.
                 </p>
               </article>
             </div>

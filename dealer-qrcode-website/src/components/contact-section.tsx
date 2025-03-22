@@ -208,7 +208,7 @@ export function ContactSection() {
                     <div>
                       {submitSuccess && (
                         <div className="mb-4 p-3 bg-green-100 text-green-800 rounded-lg">
-                          Your message has been sent successfully. We'll get back to you soon!
+                          Your message has been sent successfully. We&apos;ll get back to you soon!
                         </div>
                       )}
                       <button

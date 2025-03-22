@@ -52,7 +52,7 @@ export default function Payments() {
             </div>
             
             <div className="px-8 pb-6">
-              <h4 className="text-sm font-semibold uppercase tracking-wide text-neutral-900 mb-4">What's included:</h4>
+              <h4 className="text-sm font-semibold uppercase tracking-wide text-neutral-900 mb-4">What&apos;s included:</h4>
               <ul className="space-y-3">
                 <li className="flex items-start">
                   <svg className="h-5 w-5 flex-shrink-0 text-green-500" viewBox="0 0 20 20" fill="currentColor">
@@ -108,7 +108,7 @@ export default function Payments() {
             </div>
             
             <div className="px-8 py-6">
-              <h4 className="text-sm font-semibold uppercase tracking-wide mb-4">What's included:</h4>
+              <h4 className="text-sm font-semibold uppercase tracking-wide mb-4">What&apos;s included:</h4>
               <ul className="space-y-3">
                 <li className="flex items-start">
                   <svg className="h-5 w-5 flex-shrink-0 text-green-400" viewBox="0 0 20 20" fill="currentColor">
