@@ -19,12 +19,12 @@ export function Navbar() {
             </Link>
           </div>
           <div className="flex items-center gap-x-5">
-            <Link 
-              href="/contact" 
+            <a 
+              href="mailto:sales@dealerqrcode.com" 
               className="hidden lg:block rounded-full bg-neutral-950 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-neutral-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-neutral-950"
             >
               Contact us
-            </Link>
+            </a>
             <button type="button" className="lg:hidden" aria-label="Toggle navigation">
               <svg viewBox="0 0 24 24" fill="none" aria-hidden="true" className="h-6 w-6 stroke-neutral-950">
                 <path d="M3.75 12h16.5M3.75 6.75h16.5M3.75 17.25h16.5" strokeWidth="1.5" strokeLinecap="round" />
