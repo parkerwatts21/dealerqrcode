@@ -4,7 +4,6 @@
     "version": "3.0",
     "description": "A Chrome extension to generate dealership QR codes for 4 spots",
     "action": {
-      "default_popup": "popup.html",
       "default_icon": {
         "16": "chrome-extension.png",
         "48": "chrome-extension.png",
