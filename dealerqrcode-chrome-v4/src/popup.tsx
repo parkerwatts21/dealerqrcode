@@ -111,6 +111,9 @@ const Popup: React.FC = () => {
     subText: DEFAULT_SETTINGS.subText
   });
   
+  // Add state for logo filename
+  const [logoFilename, setLogoFilename] = useState<string>("");
+  
   // Add print position state
   const [selectedPosition, setSelectedPosition] = useState<number>(1);
   
@@ -127,6 +130,9 @@ const Popup: React.FC = () => {
   // Add state to track if dealer info is customized
   const [isDealerCustomized, setIsDealerCustomized] = useState<boolean>(false);
 
+  // Add file input ref
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
   // Load saved settings
   useEffect(() => {
     const loadSettings = async () => {
@@ -141,6 +147,11 @@ const Popup: React.FC = () => {
         
         if (savedSettings.logoUrl) {
           setLogoUrl(savedSettings.logoUrl);
+          // Extract filename from base64 if it exists
+          const filenameMatch = savedSettings.logoUrl.match(/;filename=([^;]+)/);
+          if (filenameMatch) {
+            setLogoFilename(filenameMatch[1]);
+          }
         }
 
         setIsDealerCustomized(savedSettings.isDealerCustomized);
@@ -186,13 +197,15 @@ const Popup: React.FC = () => {
   const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
+      setLogoFilename(file.name);
       const reader = new FileReader();
       reader.onloadend = () => {
-        const newLogoUrl = reader.result as string;
-        setLogoUrl(newLogoUrl);
+        // Add filename to the base64 string
+        const base64WithFilename = `${reader.result};filename=${file.name}`;
+        setLogoUrl(base64WithFilename);
         setIsDealerCustomized(true); // Mark as customized when logo is uploaded
         storage.set({ 
-          logoUrl: newLogoUrl,
+          logoUrl: base64WithFilename,
           scanText: formData.scanText,
           subText: formData.subText,
           dealer: formData.dealer,
@@ -201,6 +214,24 @@ const Popup: React.FC = () => {
       };
       reader.readAsDataURL(file);
     }
+  };
+
+  // Handle logo removal
+  const handleRemoveLogo = () => {
+    setLogoUrl("");
+    setLogoFilename("");
+    setIsDealerCustomized(false);
+    // Reset the file input
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+    storage.set({
+      logoUrl: "",
+      scanText: formData.scanText,
+      subText: formData.subText,
+      dealer: formData.dealer,
+      isDealerCustomized: false
+    });
   };
 
   // Generate QR code on button click
@@ -723,12 +754,30 @@ const Popup: React.FC = () => {
         {/* Import Logo Field */}
         <div className="flex justify-center items-center gap-4 pl-16">
           <div className="col-span-2">
-            <input
-              type="file"
-              accept="image/*"
-              onChange={handleLogoUpload}
-              className="file:mr-2 file:py-0.5 file:px-2 file:rounded file:border file:border-gray-400 file:text-sm file:bg-gray-200 hover:file:bg-gray-300 file:cursor-pointer cursor-pointer w-full text-center"
-            />
+            <div className="relative">
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                onChange={handleLogoUpload}
+                className={`file:mr-2 file:py-0.5 file:px-2 file:rounded file:border file:border-gray-400 file:text-sm file:bg-gray-200 hover:file:bg-gray-300 file:cursor-pointer cursor-pointer w-full text-center ${logoFilename ? 'has-file' : ''}`}
+              />
+              {logoFilename && (
+                <div className="absolute left-[100px] top-1/2 transform -translate-y-1/2 flex items-center gap-0.5 bg-neutral-50">
+                  <button
+                    onClick={(e) => {
+                      e.preventDefault();
+                      handleRemoveLogo();
+                    }}
+                    className="text-black hover:text-gray-700 text-base flex items-center h-full"
+                    title="Remove logo"
+                  >
+                    <span className="relative bottom-[1px]">×</span>
+                  </button>
+                  <span className="text-black truncate max-w-[200px]">{logoFilename}</span>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </div>
@@ -833,7 +882,15 @@ const Popup: React.FC = () => {
           {/* Dealer Name */}
           <div className="justify-center border-4 border-black rounded-lg px-4 py-2 text-center mx-auto w-fit">
             {logoUrl ? (
-              <img src={logoUrl} alt="Dealer Logo" className="h-8 object-contain" />
+              <img 
+                src={logoUrl.split(';filename=')[0]} 
+                alt="Dealer Logo" 
+                className="h-8 object-contain"
+                onError={(e) => {
+                  console.error('Error loading logo:', e);
+                  handleRemoveLogo();
+                }}
+              />
             ) : (
               <span className="font-black text-lg">{preview.dealer}</span>
             )}
@@ -845,3 +902,14 @@ const Popup: React.FC = () => {
 };
 
 export default Popup;
+
+<style>
+{`
+  input[type="file"].has-file::file-selector-button {
+    margin-right: 8px;
+  }
+  input[type="file"].has-file {
+    color: transparent !important;
+  }
+`}
+</style>

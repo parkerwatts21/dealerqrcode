@@ -26079,6 +26079,7 @@ const Popup = () => {
     scanText: DEFAULT_SETTINGS.scanText,
     subText: DEFAULT_SETTINGS.subText
   });
+  const [logoFilename, setLogoFilename] = reactExports.useState("");
   const [selectedPosition, setSelectedPosition] = reactExports.useState(1);
   const [url, setUrl] = reactExports.useState("");
   const [qrCodeSrc, setQrCodeSrc] = reactExports.useState("");
@@ -26088,6 +26089,7 @@ const Popup = () => {
   const previewRef = reactExports.useRef(null);
   const initialized = reactExports.useRef(false);
   const [isDealerCustomized, setIsDealerCustomized] = reactExports.useState(false);
+  const fileInputRef = reactExports.useRef(null);
   reactExports.useEffect(() => {
     const loadSettings = async () => {
       try {
@@ -26101,6 +26103,10 @@ const Popup = () => {
         }));
         if (savedSettings.logoUrl) {
           setLogoUrl(savedSettings.logoUrl);
+          const filenameMatch = savedSettings.logoUrl.match(/;filename=([^;]+)/);
+          if (filenameMatch) {
+            setLogoFilename(filenameMatch[1]);
+          }
         }
         setIsDealerCustomized(savedSettings.isDealerCustomized);
       } catch (error) {
@@ -26136,13 +26142,14 @@ const Popup = () => {
     var _a2;
     const file = (_a2 = e2.target.files) == null ? void 0 : _a2[0];
     if (file) {
+      setLogoFilename(file.name);
       const reader = new FileReader();
       reader.onloadend = () => {
-        const newLogoUrl = reader.result;
-        setLogoUrl(newLogoUrl);
+        const base64WithFilename = `${reader.result};filename=${file.name}`;
+        setLogoUrl(base64WithFilename);
         setIsDealerCustomized(true);
         storage.set({
-          logoUrl: newLogoUrl,
+          logoUrl: base64WithFilename,
           scanText: formData.scanText,
           subText: formData.subText,
           dealer: formData.dealer,
@@ -26151,6 +26158,21 @@ const Popup = () => {
       };
       reader.readAsDataURL(file);
     }
+  };
+  const handleRemoveLogo = () => {
+    setLogoUrl("");
+    setLogoFilename("");
+    setIsDealerCustomized(false);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+    storage.set({
+      logoUrl: "",
+      scanText: formData.scanText,
+      subText: formData.subText,
+      dealer: formData.dealer,
+      isDealerCustomized: false
+    });
   };
   const generateQRCode = () => {
     if (!url) {
@@ -26587,15 +26609,33 @@ const Popup = () => {
         /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "mx-4 text-neutral-600", children: "or" }),
         /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "flex-grow border-t-1 border-neutral-300" })
       ] }) }),
-      /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "flex justify-center items-center gap-4 pl-16", children: /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "col-span-2", children: /* @__PURE__ */ jsxRuntimeExports.jsx(
-        "input",
-        {
-          type: "file",
-          accept: "image/*",
-          onChange: handleLogoUpload,
-          className: "file:mr-2 file:py-0.5 file:px-2 file:rounded file:border file:border-gray-400 file:text-sm file:bg-gray-200 hover:file:bg-gray-300 file:cursor-pointer cursor-pointer w-full text-center"
-        }
-      ) }) })
+      /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "flex justify-center items-center gap-4 pl-16", children: /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "col-span-2", children: /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "relative", children: [
+        /* @__PURE__ */ jsxRuntimeExports.jsx(
+          "input",
+          {
+            ref: fileInputRef,
+            type: "file",
+            accept: "image/*",
+            onChange: handleLogoUpload,
+            className: `file:mr-2 file:py-0.5 file:px-2 file:rounded file:border file:border-gray-400 file:text-sm file:bg-gray-200 hover:file:bg-gray-300 file:cursor-pointer cursor-pointer w-full text-center ${logoFilename ? "has-file" : ""}`
+          }
+        ),
+        logoFilename && /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "absolute left-[100px] top-1/2 transform -translate-y-1/2 flex items-center gap-0.5 bg-neutral-50", children: [
+          /* @__PURE__ */ jsxRuntimeExports.jsx(
+            "button",
+            {
+              onClick: (e2) => {
+                e2.preventDefault();
+                handleRemoveLogo();
+              },
+              className: "text-black hover:text-gray-700 text-base flex items-center h-full",
+              title: "Remove logo",
+              children: /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "relative bottom-[1px]", children: "×" })
+            }
+          ),
+          /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "text-black truncate max-w-[200px]", children: logoFilename })
+        ] })
+      ] }) }) })
     ] }),
     /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "grid grid-cols-3 items-center gap-4 mb-6", children: [
       /* @__PURE__ */ jsxRuntimeExports.jsx("label", { className: "font-medium text-neutral-800 text-right", children: "Print Position:" }),
@@ -26670,7 +26710,18 @@ const Popup = () => {
               }
             ) : /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "text-gray-400 text-center", children: "QR code will appear here" }) }) })
           ] }) }),
-          /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "justify-center border-4 border-black rounded-lg px-4 py-2 text-center mx-auto w-fit", children: logoUrl ? /* @__PURE__ */ jsxRuntimeExports.jsx("img", { src: logoUrl, alt: "Dealer Logo", className: "h-8 object-contain" }) : /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "font-black text-lg", children: preview.dealer }) })
+          /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "justify-center border-4 border-black rounded-lg px-4 py-2 text-center mx-auto w-fit", children: logoUrl ? /* @__PURE__ */ jsxRuntimeExports.jsx(
+            "img",
+            {
+              src: logoUrl.split(";filename=")[0],
+              alt: "Dealer Logo",
+              className: "h-8 object-contain",
+              onError: (e2) => {
+                console.error("Error loading logo:", e2);
+                handleRemoveLogo();
+              }
+            }
+          ) : /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "font-black text-lg", children: preview.dealer }) })
         ]
       }
     ) })

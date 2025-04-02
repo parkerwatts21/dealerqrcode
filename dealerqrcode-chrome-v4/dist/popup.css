@@ -8,6 +8,7 @@
     --color-gray-200: oklch(.928 .006 264.531);
     --color-gray-300: oklch(.872 .01 258.338);
     --color-gray-400: oklch(.707 .022 261.325);
+    --color-gray-700: oklch(.373 .034 259.733);
     --color-neutral-50: oklch(.985 0 0);
     --color-neutral-300: oklch(.87 0 0);
     --color-neutral-400: oklch(.708 0 0);
@@ -20,6 +21,8 @@
     --container-xl: 36rem;
     --text-sm: .875rem;
     --text-sm--line-height: calc(1.25 / .875);
+    --text-base: 1rem;
+    --text-base--line-height: calc(1.5 / 1);
     --text-lg: 1.125rem;
     --text-lg--line-height: calc(1.75 / 1.125);
     --text-xl: 1.25rem;
@@ -320,6 +323,18 @@
     inset: calc(var(--spacing) * 0);
   }
 
+  .top-1\/2 {
+    top: 50%;
+  }
+
+  .bottom-\[1px\] {
+    bottom: 1px;
+  }
+
+  .left-\[100px\] {
+    left: 100px;
+  }
+
   .z-10 {
     z-index: 10;
   }
@@ -530,6 +545,10 @@
     width: 100%;
   }
 
+  .max-w-\[200px\] {
+    max-width: 200px;
+  }
+
   .max-w-full {
     max-width: 100%;
   }
@@ -544,6 +563,11 @@
 
   .flex-grow {
     flex-grow: 1;
+  }
+
+  .-translate-y-1\/2 {
+    --tw-translate-y: calc(calc(1 / 2 * 100%) * -1);
+    translate: var(--tw-translate-x) var(--tw-translate-y);
   }
 
   .transform {
@@ -578,6 +602,10 @@
     justify-content: center;
   }
 
+  .gap-0\.5 {
+    gap: calc(var(--spacing) * .5);
+  }
+
   .gap-4 {
     gap: calc(var(--spacing) * 4);
   }
@@ -586,6 +614,12 @@
     --tw-space-y-reverse: 0;
     margin-block-start: calc(calc(var(--spacing) * 4) * var(--tw-space-y-reverse));
     margin-block-end: calc(calc(var(--spacing) * 4) * calc(1 - var(--tw-space-y-reverse)));
+  }
+
+  .truncate {
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    overflow: hidden;
   }
 
   .rounded {
@@ -703,6 +737,11 @@
   .text-2xl {
     font-size: var(--text-2xl);
     line-height: var(--tw-leading, var(--text-2xl--line-height));
+  }
+
+  .text-base {
+    font-size: var(--text-base);
+    line-height: var(--tw-leading, var(--text-base--line-height));
   }
 
   .text-lg {
@@ -888,6 +927,10 @@
       background-color: var(--color-neutral-700);
     }
 
+    .hover\:text-gray-700:hover {
+      color: var(--color-gray-700);
+    }
+
     .hover\:file\:bg-gray-300:hover::file-selector-button {
       background-color: var(--color-gray-300);
     }
@@ -929,6 +972,24 @@ body {
   min-height: 100vh;
   margin: 0;
   padding: 0;
+}
+
+@property --tw-translate-x {
+  syntax: "*";
+  inherits: false;
+  initial-value: 0;
+}
+
+@property --tw-translate-y {
+  syntax: "*";
+  inherits: false;
+  initial-value: 0;
+}
+
+@property --tw-translate-z {
+  syntax: "*";
+  inherits: false;
+  initial-value: 0;
 }
 
 @property --tw-rotate-x {
