@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import QRCode from "qrcode";
-import html2canvas from "html2canvas-pro";
-import { jsPDF } from "jspdf";
+import QRCodeLayout from "./components/QRCodeLayout";
 
 // Define types for our form data
 type FormField = "title" | "stock" | "miles" | "dealer";
@@ -15,6 +14,17 @@ interface FormDataType {
   subText: string;
 }
 
+interface QRCodeData {
+  id: number;
+  title: string;
+  stock: string;
+  miles: string;
+  dealer: string;
+  qrCodeSrc: string;
+  scanText: string;
+  subText: string;
+}
+
 interface ScrapedData {
   title?: string;
   stock?: string;
@@ -23,7 +33,7 @@ interface ScrapedData {
 }
 
 const Popup: React.FC = () => {
-  // State management for form inputs (empty by default)
+  // State management for form inputs and QR codes
   const [formData, setFormData] = useState<FormDataType>({
     title: "",
     stock: "",
@@ -33,11 +43,13 @@ const Popup: React.FC = () => {
     subText: "FOR INFO + PRICE"
   });
   
-  // QR code and URL states
   const [url, setUrl] = useState<string>("");
   const [qrCodeSrc, setQrCodeSrc] = useState<string>("");
   const [isGenerating, setIsGenerating] = useState<boolean>(false);
   const [errorMessage, setErrorMessage] = useState<string>("");
+  const [showLayout, setShowLayout] = useState<boolean>(false);
+  const [savedCodes, setSavedCodes] = useState<QRCodeData[]>([]);
+  const [selectedPosition, setSelectedPosition] = useState<number | null>(null);
   
   const previewRef = useRef<HTMLDivElement>(null);
   const initialized = useRef<boolean>(false);
@@ -122,6 +134,31 @@ const Popup: React.FC = () => {
       return;
     }
     generateQRCodeFromUrl(url);
+  };
+
+  // Save current QR code to a position
+  const saveToPosition = (position: number) => {
+    if (!qrCodeSrc) {
+      alert("Please generate a QR code first");
+      return;
+    }
+
+    const newCode: QRCodeData = {
+      id: Date.now(),
+      title: formData.title,
+      stock: formData.stock,
+      miles: formData.miles,
+      dealer: formData.dealer,
+      qrCodeSrc: qrCodeSrc,
+      scanText: formData.scanText,
+      subText: formData.subText
+    };
+
+    // Update saved codes
+    const updatedCodes = [...savedCodes];
+    updatedCodes[position - 1] = newCode;
+    setSavedCodes(updatedCodes);
+    setSelectedPosition(position);
   };
 
   // Web scraping function to extract vehicle data from the current page
@@ -433,84 +470,17 @@ const Popup: React.FC = () => {
     subText: formData.subText
   };
 
-  const downloadPDF = () => {
-    if (!previewRef.current) {
-      console.error("⚠️ Preview reference not available");
-      return;
-    }
-  
-    // Ensure the QR code is generated before capturing the PDF
-    if (!qrCodeSrc) {
-      console.warn("⚠️ QR Code not available yet, regenerating...");
-      generateQRCodeFromUrl(url);
-  
-      // Wait for QR code to generate before capturing PDF
-      setTimeout(() => {
-        if (qrCodeSrc) {
-          console.log("✅ QR Code ready, capturing PDF...");
-          captureAndDownload();
-        } else {
-          alert("Error: QR Code failed to generate. Try again.");
-        }
-      }, 500);
-      return;
-    }
-  
-    captureAndDownload();
-  };
-  
-  const captureAndDownload = async () => {
-    if (!previewRef.current) {
-        console.error("❌ Error: previewRef is null");
-        alert("Error: Could not capture preview.");
-        return;
-    }
-
-    console.log("📸 Capturing preview as image...");
-
-    try {
-        const canvas = await html2canvas(previewRef.current, {
-            scale: 4, // Increase resolution
-            useCORS: true, // Ensure external images load correctly
-            backgroundColor: null, // Preserve transparency if needed
-            logging: false,
-        });
-
-        console.log("✅ Image captured, converting to PDF...");
-        const imgData = canvas.toDataURL("image/png", 1.0);
-
-        // Calculate aspect ratio for dynamic PDF size
-        const imgWidth = 3.0; // 3 inches
-        const imgHeight = (canvas.height / canvas.width) * imgWidth; // Maintain aspect ratio
-
-        const pdf = new jsPDF({
-            orientation: "portrait",
-            unit: "in",
-            format: [imgWidth, imgHeight], // Adjust based on preview size
-        });
-
-        pdf.addImage(imgData, "PNG", 0, 0, imgWidth, imgHeight, undefined, "FAST");
-
-        const filename = formData?.title
-            ? `${formData.title.replace(/[^a-z0-9]/gi, "-").toLowerCase()}_${formData.stock || "000000"}_QR.pdf`
-            : "qr_code.pdf";
-
-        pdf.save(filename);
-        console.log("✅ PDF saved successfully!");
-    } catch (error) {
-        console.error("❌ Error generating PDF:", error);
-        alert("Error generating PDF. Please try again.");
-    }
-  };
-
-
-  // Form field configuration for cleaner rendering - only vehicle info fields
+  // Form field configuration for cleaner rendering
   const formFields: Array<{name: FormField; label: string; placeholder: string}> = [
     { name: "title", label: "Vehicle Title", placeholder: "Enter vehicle make, model, year" },
     { name: "stock", label: "Stock Number", placeholder: "Enter stock number" },
     { name: "miles", label: "Miles", placeholder: "Enter vehicle mileage" },
     { name: "dealer", label: "Dealership Name", placeholder: "Enter dealership name" }
   ];
+
+  if (showLayout) {
+    return <QRCodeLayout codes={savedCodes} onBack={() => setShowLayout(false)} />;
+  }
 
   return (
     <div className="max-w-xl mx-auto p-6 bg-neutral-50 rounded-lg shadow-md">
@@ -520,7 +490,7 @@ const Popup: React.FC = () => {
 
       <h1 className="text-2xl font-bold text-center mb-6">QR Code Generator</h1>
 
-      {/* Form Fields - only vehicle info, no QR text fields */}
+      {/* Form Fields */}
       <div className="space-y-4 mb-8">
         {formFields.map((field) => (
           <div key={field.name} className="grid grid-cols-3 items-center gap-4">
@@ -549,12 +519,31 @@ const Popup: React.FC = () => {
           {isGenerating ? "Generating..." : "Generate QR Code"}
         </button>
         <button
-          onClick={downloadPDF}
-          disabled={!qrCodeSrc}
+          onClick={() => setShowLayout(true)}
+          disabled={savedCodes.length === 0}
           className="flex-1 py-3 rounded-lg px-4 text-white bg-black hover:bg-neutral-700 transition duration-200 font-semibold disabled:bg-neutral-400"
         >
-          Download PDF
+          QR Code Layout
         </button>
+      </div>
+
+      {/* Position Selection Buttons */}
+      <div className="flex justify-center gap-4 mb-6">
+        {[1, 2, 3, 4].map((position) => (
+          <button
+            key={position}
+            onClick={() => saveToPosition(position)}
+            disabled={!qrCodeSrc}
+            className={`w-12 h-12 rounded-full font-bold border-2 transition duration-200
+              ${selectedPosition === position 
+                ? 'bg-black text-white border-black' 
+                : 'bg-white text-black border-black hover:bg-neutral-100'}
+              ${savedCodes[position - 1] ? 'ring-2 ring-green-500' : ''}
+              disabled:opacity-50 disabled:cursor-not-allowed`}
+          >
+            {position}
+          </button>
+        ))}
       </div>
 
       {/* Preview Section */}
@@ -563,7 +552,7 @@ const Popup: React.FC = () => {
         <div 
           ref={previewRef} 
           className="bg-white text-black rounded-lg p-8 w-90 mx-auto shadow-md border border-gray-200"
-          style={{ aspectRatio: "3/5" }} // Maintain 3:5 aspect ratio
+          style={{ aspectRatio: "3/5" }}
         >
           {/* Vehicle Title */}
           <h2 className="text-2xl font-black text-center mb-2 mt-1">{preview.title}</h2>
