@@ -26010,22 +26010,155 @@ E.API.PDFObject = function() {
     return "" + r;
   }, e2;
 }();
+const DEFAULT_SETTINGS = {
+  scanText: "SCAN ME",
+  subText: "FOR INFO + PRICE",
+  dealer: "",
+  // Empty by default
+  logoUrl: "",
+  isDealerCustomized: false
+};
+const STORAGE_KEY = "dealerqrcode_settings";
+const storage = {
+  async get() {
+    var _a2;
+    try {
+      if (typeof chrome !== "undefined" && ((_a2 = chrome == null ? void 0 : chrome.storage) == null ? void 0 : _a2.sync)) {
+        return new Promise((resolve) => {
+          chrome.storage.sync.get(DEFAULT_SETTINGS, (result) => {
+            resolve({
+              scanText: result.scanText || DEFAULT_SETTINGS.scanText,
+              subText: result.subText || DEFAULT_SETTINGS.subText,
+              dealer: result.dealer || DEFAULT_SETTINGS.dealer,
+              logoUrl: result.logoUrl || DEFAULT_SETTINGS.logoUrl,
+              isDealerCustomized: result.isDealerCustomized || DEFAULT_SETTINGS.isDealerCustomized
+            });
+          });
+        });
+      } else {
+        const saved = localStorage.getItem(STORAGE_KEY);
+        const parsedSettings = saved ? JSON.parse(saved) : DEFAULT_SETTINGS;
+        return {
+          scanText: parsedSettings.scanText || DEFAULT_SETTINGS.scanText,
+          subText: parsedSettings.subText || DEFAULT_SETTINGS.subText,
+          dealer: parsedSettings.dealer || DEFAULT_SETTINGS.dealer,
+          logoUrl: parsedSettings.logoUrl || DEFAULT_SETTINGS.logoUrl,
+          isDealerCustomized: parsedSettings.isDealerCustomized || DEFAULT_SETTINGS.isDealerCustomized
+        };
+      }
+    } catch (error) {
+      console.warn("Error reading settings, using defaults:", error);
+      return { ...DEFAULT_SETTINGS };
+    }
+  },
+  async set(settings) {
+    var _a2;
+    try {
+      if (typeof chrome !== "undefined" && ((_a2 = chrome == null ? void 0 : chrome.storage) == null ? void 0 : _a2.sync)) {
+        return new Promise((resolve) => {
+          chrome.storage.sync.set(settings, () => {
+            resolve();
+          });
+        });
+      } else {
+        const current = await this.get();
+        const updated = { ...current, ...settings };
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+      }
+    } catch (error) {
+      console.warn("Error saving settings:", error);
+    }
+  }
+};
 const Popup = () => {
   const [formData, setFormData] = reactExports.useState({
     title: "",
     stock: "",
     miles: "",
-    dealer: "",
-    scanText: "SCAN ME",
-    subText: "FOR INFO + PRICE"
+    dealer: DEFAULT_SETTINGS.dealer,
+    scanText: DEFAULT_SETTINGS.scanText,
+    subText: DEFAULT_SETTINGS.subText
   });
   const [selectedPosition, setSelectedPosition] = reactExports.useState(1);
   const [url, setUrl] = reactExports.useState("");
   const [qrCodeSrc, setQrCodeSrc] = reactExports.useState("");
   const [isGenerating, setIsGenerating] = reactExports.useState(false);
   const [errorMessage, setErrorMessage] = reactExports.useState("");
+  const [logoUrl, setLogoUrl] = reactExports.useState(DEFAULT_SETTINGS.logoUrl);
   const previewRef = reactExports.useRef(null);
   const initialized = reactExports.useRef(false);
+  const [isDealerCustomized, setIsDealerCustomized] = reactExports.useState(false);
+  reactExports.useEffect(() => {
+    const loadSettings = async () => {
+      try {
+        const savedSettings = await storage.get();
+        setFormData((prev) => ({
+          ...prev,
+          scanText: savedSettings.scanText,
+          subText: savedSettings.subText,
+          dealer: savedSettings.dealer || ""
+          // Ensure dealer is empty string if not set
+        }));
+        if (savedSettings.logoUrl) {
+          setLogoUrl(savedSettings.logoUrl);
+        }
+        setIsDealerCustomized(savedSettings.isDealerCustomized);
+      } catch (error) {
+        console.error("Error loading settings:", error);
+      }
+    };
+    loadSettings();
+  }, []);
+  const handleInputChange = (e2) => {
+    const { name, value } = e2.target;
+    setFormData((prev) => {
+      const newData = {
+        ...prev,
+        [name]: value
+      };
+      if (name === "scanText" || name === "subText" || name === "dealer") {
+        const isCustomizingDealer = name === "dealer" && value !== "";
+        if (isCustomizingDealer) {
+          setIsDealerCustomized(true);
+        }
+        storage.set({
+          scanText: newData.scanText,
+          subText: newData.subText,
+          dealer: newData.dealer,
+          logoUrl,
+          isDealerCustomized: isCustomizingDealer ? true : isDealerCustomized
+        });
+      }
+      return newData;
+    });
+  };
+  const handleLogoUpload = (e2) => {
+    var _a2;
+    const file = (_a2 = e2.target.files) == null ? void 0 : _a2[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const newLogoUrl = reader.result;
+        setLogoUrl(newLogoUrl);
+        setIsDealerCustomized(true);
+        storage.set({
+          logoUrl: newLogoUrl,
+          scanText: formData.scanText,
+          subText: formData.subText,
+          dealer: formData.dealer,
+          isDealerCustomized: true
+        });
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+  const generateQRCode = () => {
+    if (!url) {
+      setErrorMessage("Error: No URL available");
+      return;
+    }
+    generateQRCodeFromUrl(url);
+  };
   const initializeApp = (currentUrl) => {
     console.log("Initializing app with URL:", currentUrl);
     if (!currentUrl) {
@@ -26078,20 +26211,6 @@ const Popup = () => {
       setIsGenerating(false);
     }
   };
-  const handleInputChange = (e2) => {
-    const { name, value } = e2.target;
-    setFormData({
-      ...formData,
-      [name]: value
-    });
-  };
-  const generateQRCode = () => {
-    if (!url) {
-      setErrorMessage("Error: No URL available");
-      return;
-    }
-    generateQRCodeFromUrl(url);
-  };
   const scrapeVehicleData = () => {
     console.log("Starting vehicle data scraping process...");
     if (typeof chrome !== "undefined" && (chrome == null ? void 0 : chrome.scripting) && chrome.scripting.executeScript) {
@@ -26109,13 +26228,25 @@ const Popup = () => {
               if (injectionResults && injectionResults[0] && injectionResults[0].result) {
                 const scrapedData = injectionResults[0].result;
                 console.log("Successfully received scraped data:", scrapedData);
-                setFormData((prevData) => ({
-                  ...prevData,
-                  ...scrapedData.title && { title: scrapedData.title },
-                  ...scrapedData.stock && { stock: scrapedData.stock },
-                  ...scrapedData.miles && { miles: scrapedData.miles },
-                  ...scrapedData.dealer && { dealer: scrapedData.dealer }
-                }));
+                setFormData((prevData) => {
+                  const newData = {
+                    ...prevData,
+                    ...scrapedData.title && { title: scrapedData.title },
+                    ...scrapedData.stock && { stock: scrapedData.stock },
+                    ...scrapedData.miles && { miles: scrapedData.miles }
+                  };
+                  if (!prevData.dealer && scrapedData.dealer) {
+                    newData.dealer = scrapedData.dealer;
+                    storage.set({
+                      dealer: scrapedData.dealer,
+                      scanText: prevData.scanText,
+                      subText: prevData.subText,
+                      logoUrl,
+                      isDealerCustomized: false
+                    });
+                  }
+                  return newData;
+                });
               } else {
                 console.log("No data returned from content script");
               }
@@ -26176,49 +26307,53 @@ const Popup = () => {
           }
         }
       }
-      const dealerSelectors = [
-        ".dealer-name",
-        ".dealership",
-        '[data-testid="dealerName"]',
-        'meta[property="og:site_name"]',
-        ".vdp-dealer-name",
-        ".dealer-info h2",
-        ".dealer-info h1",
-        ".header-dealer-name",
-        ".site-header .logo",
-        ".dealership-name"
-      ];
-      for (const selector of dealerSelectors) {
-        const element = selector.startsWith("meta") ? document.querySelector(selector) : document.querySelector(selector);
-        if (element) {
-          const content2 = selector.startsWith("meta") ? element.content : element.textContent;
-          if (content2) {
-            scrapedData.dealer = content2.trim().toUpperCase();
-            console.log("✅ Found Dealer:", scrapedData.dealer);
-            break;
-          }
-        }
-      }
       if (!scrapedData.dealer) {
-        const pageTitle = document.title;
-        if (pageTitle && pageTitle.includes(" | ")) {
-          const parts = pageTitle.split(" | ");
-          if (parts.length > 1) {
-            scrapedData.dealer = parts[parts.length - 1].trim().toUpperCase();
-            console.log("✅ Found Dealer from Title:", scrapedData.dealer);
+        const dealerSelectors = [
+          ".dealer-name",
+          ".dealership",
+          '[data-testid="dealerName"]',
+          'meta[property="og:site_name"]',
+          ".vdp-dealer-name",
+          ".dealer-info h2",
+          ".dealer-info h1",
+          ".header-dealer-name",
+          ".site-header .logo",
+          ".dealership-name"
+        ];
+        for (const selector of dealerSelectors) {
+          const element = selector.startsWith("meta") ? document.querySelector(selector) : document.querySelector(selector);
+          if (element) {
+            const content2 = selector.startsWith("meta") ? element.content : element.textContent;
+            if (content2) {
+              scrapedData.dealer = content2.trim().toUpperCase();
+              console.log("✅ Found Dealer:", scrapedData.dealer);
+              break;
+            }
           }
         }
-      }
-      if (!scrapedData.dealer) {
-        try {
-          const domain = window.location.hostname.replace("www.", "").replace(".com", "").replace(/\./g, " ").split(" ").map((word) => word.charAt(0).toUpperCase() + word.slice(1)).join(" ");
-          if (domain) {
-            scrapedData.dealer = domain.toUpperCase();
-            console.log("✅ Using Domain as Dealer:", scrapedData.dealer);
+        if (!scrapedData.dealer) {
+          const pageTitle = document.title;
+          if (pageTitle && pageTitle.includes(" | ")) {
+            const parts = pageTitle.split(" | ");
+            if (parts.length > 1) {
+              scrapedData.dealer = parts[parts.length - 1].trim().toUpperCase();
+              console.log("✅ Found Dealer from Title:", scrapedData.dealer);
+            }
           }
-        } catch (e2) {
-          console.error("⚠️ Error extracting dealer from domain:", e2);
         }
+        if (!scrapedData.dealer) {
+          try {
+            const domain = window.location.hostname.replace("www.", "").replace(".com", "").replace(/\./g, " ").split(" ").map((word) => word.charAt(0).toUpperCase() + word.slice(1)).join(" ");
+            if (domain) {
+              scrapedData.dealer = domain.toUpperCase();
+              console.log("✅ Using Domain as Dealer:", scrapedData.dealer);
+            }
+          } catch (e2) {
+            console.error("⚠️ Error extracting dealer from domain:", e2);
+          }
+        }
+      } else {
+        console.log("ℹ️ Skipping dealer extraction - dealer already set");
       }
       const stockSelectors = [
         ".vdp-info-block__info-item-description",
@@ -26457,6 +26592,7 @@ const Popup = () => {
         {
           type: "file",
           accept: "image/*",
+          onChange: handleLogoUpload,
           className: "file:mr-2 file:py-0.5 file:px-2 file:rounded file:border file:border-gray-400 file:text-sm file:bg-gray-200 hover:file:bg-gray-300 file:cursor-pointer cursor-pointer w-full text-center"
         }
       ) }) })
@@ -26534,7 +26670,7 @@ const Popup = () => {
               }
             ) : /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "text-gray-400 text-center", children: "QR code will appear here" }) }) })
           ] }) }),
-          /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "justify-center border-4 border-black rounded-lg px-4 py-2 text-center mx-auto w-fit", children: /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "font-black text-lg", children: preview.dealer }) })
+          /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "justify-center border-4 border-black rounded-lg px-4 py-2 text-center mx-auto w-fit", children: logoUrl ? /* @__PURE__ */ jsxRuntimeExports.jsx("img", { src: logoUrl, alt: "Dealer Logo", className: "h-8 object-contain" }) : /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "font-black text-lg", children: preview.dealer }) })
         ]
       }
     ) })

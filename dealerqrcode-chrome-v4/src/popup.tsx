@@ -3,6 +3,9 @@ import QRCode from "qrcode";
 import html2canvas from "html2canvas-pro";
 import { jsPDF } from "jspdf";
 
+// Import Chrome types
+/// <reference types="chrome"/>
+
 // Define types for our form data
 type FormField = "title" | "stock" | "miles" | "dealer" | "scanText" | "subText";
 
@@ -22,15 +25,90 @@ interface ScrapedData {
   dealer?: string;
 }
 
+// Settings type definition
+interface Settings {
+  scanText: string;
+  subText: string;
+  dealer: string;
+  logoUrl: string;
+  isDealerCustomized: boolean; // Track if dealer name has been manually set
+}
+
+// Default values for settings
+const DEFAULT_SETTINGS: Settings = {
+  scanText: "SCAN ME",
+  subText: "FOR INFO + PRICE",
+  dealer: "", // Empty by default
+  logoUrl: "",
+  isDealerCustomized: false
+};
+
+// Local storage key
+const STORAGE_KEY = 'dealerqrcode_settings';
+
+// Storage utility functions
+const storage = {
+  async get(): Promise<Settings> {
+    try {
+      if (typeof chrome !== 'undefined' && chrome?.storage?.sync) {
+        return new Promise((resolve) => {
+          chrome.storage.sync.get(DEFAULT_SETTINGS, (result: Settings) => {
+            resolve({
+              scanText: result.scanText || DEFAULT_SETTINGS.scanText,
+              subText: result.subText || DEFAULT_SETTINGS.subText,
+              dealer: result.dealer || DEFAULT_SETTINGS.dealer,
+              logoUrl: result.logoUrl || DEFAULT_SETTINGS.logoUrl,
+              isDealerCustomized: result.isDealerCustomized || DEFAULT_SETTINGS.isDealerCustomized
+            });
+          });
+        });
+      } else {
+        // Fallback to localStorage in development
+        const saved = localStorage.getItem(STORAGE_KEY);
+        const parsedSettings = saved ? JSON.parse(saved) : DEFAULT_SETTINGS;
+        return {
+          scanText: parsedSettings.scanText || DEFAULT_SETTINGS.scanText,
+          subText: parsedSettings.subText || DEFAULT_SETTINGS.subText,
+          dealer: parsedSettings.dealer || DEFAULT_SETTINGS.dealer,
+          logoUrl: parsedSettings.logoUrl || DEFAULT_SETTINGS.logoUrl,
+          isDealerCustomized: parsedSettings.isDealerCustomized || DEFAULT_SETTINGS.isDealerCustomized
+        };
+      }
+    } catch (error) {
+      console.warn('Error reading settings, using defaults:', error);
+      return { ...DEFAULT_SETTINGS };
+    }
+  },
+
+  async set(settings: Partial<Settings>): Promise<void> {
+    try {
+      if (typeof chrome !== 'undefined' && chrome?.storage?.sync) {
+        return new Promise((resolve) => {
+          chrome.storage.sync.set(settings, () => {
+            resolve();
+          });
+        });
+      } else {
+        // Fallback to localStorage in development
+        const current = await this.get();
+        const updated = { ...current, ...settings };
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+      }
+    } catch (error) {
+      console.warn('Error saving settings:', error);
+    }
+  }
+};
+
 const Popup: React.FC = () => {
   // State management for form inputs (empty by default)
   const [formData, setFormData] = useState<FormDataType>({
     title: "",
     stock: "",
     miles: "",
-    dealer: "",
-    scanText: "SCAN ME",
-    subText: "FOR INFO + PRICE"
+    dealer: DEFAULT_SETTINGS.dealer,
+    scanText: DEFAULT_SETTINGS.scanText,
+    subText: DEFAULT_SETTINGS.subText
   });
   
   // Add print position state
@@ -41,9 +119,98 @@ const Popup: React.FC = () => {
   const [qrCodeSrc, setQrCodeSrc] = useState<string>("");
   const [isGenerating, setIsGenerating] = useState<boolean>(false);
   const [errorMessage, setErrorMessage] = useState<string>("");
+  const [logoUrl, setLogoUrl] = useState<string>(DEFAULT_SETTINGS.logoUrl);
   
   const previewRef = useRef<HTMLDivElement>(null);
   const initialized = useRef<boolean>(false);
+
+  // Add state to track if dealer info is customized
+  const [isDealerCustomized, setIsDealerCustomized] = useState<boolean>(false);
+
+  // Load saved settings
+  useEffect(() => {
+    const loadSettings = async () => {
+      try {
+        const savedSettings = await storage.get();
+        setFormData(prev => ({
+          ...prev,
+          scanText: savedSettings.scanText,
+          subText: savedSettings.subText,
+          dealer: savedSettings.dealer || "" // Ensure dealer is empty string if not set
+        }));
+        
+        if (savedSettings.logoUrl) {
+          setLogoUrl(savedSettings.logoUrl);
+        }
+
+        setIsDealerCustomized(savedSettings.isDealerCustomized);
+      } catch (error) {
+        console.error('Error loading settings:', error);
+      }
+    };
+
+    loadSettings();
+  }, []);
+
+  // Handle input changes
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setFormData(prev => {
+      const newData = {
+        ...prev,
+        [name as FormField]: value
+      };
+      
+      // Save settings when they change
+      if (name === 'scanText' || name === 'subText' || name === 'dealer') {
+        // If dealer name is being changed, mark it as customized
+        const isCustomizingDealer = name === 'dealer' && value !== '';
+        if (isCustomizingDealer) {
+          setIsDealerCustomized(true);
+        }
+
+        storage.set({
+          scanText: newData.scanText,
+          subText: newData.subText,
+          dealer: newData.dealer,
+          logoUrl,
+          isDealerCustomized: isCustomizingDealer ? true : isDealerCustomized
+        });
+      }
+      
+      return newData;
+    });
+  };
+
+  // Handle logo file upload
+  const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const newLogoUrl = reader.result as string;
+        setLogoUrl(newLogoUrl);
+        setIsDealerCustomized(true); // Mark as customized when logo is uploaded
+        storage.set({ 
+          logoUrl: newLogoUrl,
+          scanText: formData.scanText,
+          subText: formData.subText,
+          dealer: formData.dealer,
+          isDealerCustomized: true
+        });
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  // Generate QR code on button click
+  const generateQRCode = () => {
+    if (!url) {
+      setErrorMessage("Error: No URL available");
+      return;
+    }
+    generateQRCodeFromUrl(url);
+  };
 
   // Initialize the app with the current tab URL
   const initializeApp = (currentUrl: string | null) => {
@@ -109,29 +276,10 @@ const Popup: React.FC = () => {
     }
   };
 
-  // Handle input changes
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setFormData({
-      ...formData,
-      [name as FormField]: value
-    });
-  };
-
-  // Generate QR code on button click
-  const generateQRCode = () => {
-    if (!url) {
-      setErrorMessage("Error: No URL available");
-      return;
-    }
-    generateQRCodeFromUrl(url);
-  };
-
-  // Web scraping function to extract vehicle data from the current page
+  // Modified scrapeVehicleData function
   const scrapeVehicleData = () => {
     console.log("Starting vehicle data scraping process...");
     
-    // Using chrome.scripting.executeScript for Manifest V3
     if (typeof chrome !== "undefined" && chrome?.scripting && chrome.scripting.executeScript) {
       try {
         chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
@@ -140,7 +288,6 @@ const Popup: React.FC = () => {
           if (tabs && tabs.length > 0 && tabs[0]?.id) {
             console.log("Attempting to execute content script on tab:", tabs[0].id);
             
-            // Execute content script in the active tab using the newer API
             chrome.scripting.executeScript({
               target: { tabId: tabs[0].id },
               func: contentScriptFunction
@@ -152,13 +299,29 @@ const Popup: React.FC = () => {
                 console.log("Successfully received scraped data:", scrapedData);
                 
                 // Update form with scraped data
-                setFormData(prevData => ({
-                  ...prevData,
-                  ...(scrapedData.title && { title: scrapedData.title }),
-                  ...(scrapedData.stock && { stock: scrapedData.stock }),
-                  ...(scrapedData.miles && { miles: scrapedData.miles }),
-                  ...(scrapedData.dealer && { dealer: scrapedData.dealer })
-                }));
+                setFormData(prevData => {
+                  const newData = {
+                    ...prevData,
+                    ...(scrapedData.title && { title: scrapedData.title }),
+                    ...(scrapedData.stock && { stock: scrapedData.stock }),
+                    ...(scrapedData.miles && { miles: scrapedData.miles })
+                  };
+
+                  // Only update dealer name if it's currently empty and we have scraped data
+                  if (!prevData.dealer && scrapedData.dealer) {
+                    newData.dealer = scrapedData.dealer;
+                    // Save the scraped dealer name
+                    storage.set({
+                      dealer: scrapedData.dealer,
+                      scanText: prevData.scanText,
+                      subText: prevData.subText,
+                      logoUrl,
+                      isDealerCustomized: false
+                    });
+                  }
+
+                  return newData;
+                });
               } else {
                 console.log("No data returned from content script");
               }
@@ -223,59 +386,64 @@ const Popup: React.FC = () => {
         /** ========================
          * DEALERSHIP NAME EXTRACTION
          ========================= */
-        const dealerSelectors = [
-            '.dealer-name', '.dealership', '[data-testid="dealerName"]',
-            'meta[property="og:site_name"]', '.vdp-dealer-name',
-            '.dealer-info h2', '.dealer-info h1', '.header-dealer-name',
-            '.site-header .logo', '.dealership-name'
-        ];
-
-        for (const selector of dealerSelectors) {
-            const element = selector.startsWith('meta') 
-                ? document.querySelector(selector) as HTMLMetaElement
-                : document.querySelector(selector);
-
-            if (element) {
-                const content = selector.startsWith('meta')
-                    ? (element as HTMLMetaElement).content
-                    : element.textContent;
-                if (content) {
-                    scrapedData.dealer = content.trim().toUpperCase();
-                    console.log("✅ Found Dealer:", scrapedData.dealer);
-                    break;
-                }
-            }
-        }
-
-        // Fallback: Extract from the website's title
+        // Only proceed with dealer name extraction if dealer is empty
         if (!scrapedData.dealer) {
-            const pageTitle = document.title;
-            if (pageTitle && pageTitle.includes(' | ')) {
-                const parts = pageTitle.split(' | ');
-                if (parts.length > 1) {
-                    scrapedData.dealer = parts[parts.length - 1].trim().toUpperCase();
-                    console.log("✅ Found Dealer from Title:", scrapedData.dealer);
-                }
-            }
-        }
+          const dealerSelectors = [
+              '.dealer-name', '.dealership', '[data-testid="dealerName"]',
+              'meta[property="og:site_name"]', '.vdp-dealer-name',
+              '.dealer-info h2', '.dealer-info h1', '.header-dealer-name',
+              '.site-header .logo', '.dealership-name'
+          ];
 
-        // Last Fallback: Extract from domain
-        if (!scrapedData.dealer) {
-            try {
-                const domain = window.location.hostname
-                    .replace('www.', '')
-                    .replace('.com', '')
-                    .replace(/\./g, ' ')
-                    .split(' ')
-                    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-                    .join(' ');
-                if (domain) {
-                    scrapedData.dealer = domain.toUpperCase();
-                    console.log("✅ Using Domain as Dealer:", scrapedData.dealer);
-                }
-            } catch (e) {
-                console.error("⚠️ Error extracting dealer from domain:", e);
-            }
+          for (const selector of dealerSelectors) {
+              const element = selector.startsWith('meta') 
+                  ? document.querySelector(selector) as HTMLMetaElement
+                  : document.querySelector(selector);
+
+              if (element) {
+                  const content = selector.startsWith('meta')
+                      ? (element as HTMLMetaElement).content
+                      : element.textContent;
+                  if (content) {
+                      scrapedData.dealer = content.trim().toUpperCase();
+                      console.log("✅ Found Dealer:", scrapedData.dealer);
+                      break;
+                  }
+              }
+          }
+
+          // Fallback: Extract from the website's title
+          if (!scrapedData.dealer) {
+              const pageTitle = document.title;
+              if (pageTitle && pageTitle.includes(' | ')) {
+                  const parts = pageTitle.split(' | ');
+                  if (parts.length > 1) {
+                      scrapedData.dealer = parts[parts.length - 1].trim().toUpperCase();
+                      console.log("✅ Found Dealer from Title:", scrapedData.dealer);
+                  }
+              }
+          }
+
+          // Last Fallback: Extract from domain
+          if (!scrapedData.dealer) {
+              try {
+                  const domain = window.location.hostname
+                      .replace('www.', '')
+                      .replace('.com', '')
+                      .replace(/\./g, ' ')
+                      .split(' ')
+                      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+                      .join(' ');
+                  if (domain) {
+                      scrapedData.dealer = domain.toUpperCase();
+                      console.log("✅ Using Domain as Dealer:", scrapedData.dealer);
+                  }
+              } catch (e) {
+                  console.error("⚠️ Error extracting dealer from domain:", e);
+              }
+          }
+        } else {
+          console.log("ℹ️ Skipping dealer extraction - dealer already set");
         }
 
         /** ========================
@@ -558,6 +726,7 @@ const Popup: React.FC = () => {
             <input
               type="file"
               accept="image/*"
+              onChange={handleLogoUpload}
               className="file:mr-2 file:py-0.5 file:px-2 file:rounded file:border file:border-gray-400 file:text-sm file:bg-gray-200 hover:file:bg-gray-300 file:cursor-pointer cursor-pointer w-full text-center"
             />
           </div>
@@ -663,7 +832,11 @@ const Popup: React.FC = () => {
 
           {/* Dealer Name */}
           <div className="justify-center border-4 border-black rounded-lg px-4 py-2 text-center mx-auto w-fit">
-            <span className="font-black text-lg">{preview.dealer}</span>
+            {logoUrl ? (
+              <img src={logoUrl} alt="Dealer Logo" className="h-8 object-contain" />
+            ) : (
+              <span className="font-black text-lg">{preview.dealer}</span>
+            )}
           </div>
         </div>
       </div>
