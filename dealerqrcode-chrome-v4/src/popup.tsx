@@ -4,7 +4,7 @@ import html2canvas from "html2canvas-pro";
 import { jsPDF } from "jspdf";
 
 // Define types for our form data
-type FormField = "title" | "stock" | "miles" | "dealer";
+type FormField = "title" | "stock" | "miles" | "dealer" | "scanText" | "subText";
 
 interface FormDataType {
   title: string;
@@ -32,6 +32,9 @@ const Popup: React.FC = () => {
     scanText: "SCAN ME",
     subText: "FOR INFO + PRICE"
   });
+  
+  // Add print position state
+  const [selectedPosition, setSelectedPosition] = useState<number>(1);
   
   // QR code and URL states
   const [url, setUrl] = useState<string>("");
@@ -509,7 +512,9 @@ const Popup: React.FC = () => {
     { name: "title", label: "Vehicle Title", placeholder: "Enter vehicle make, model, year" },
     { name: "stock", label: "Stock Number", placeholder: "Enter stock number" },
     { name: "miles", label: "Miles", placeholder: "Enter vehicle mileage" },
-    { name: "dealer", label: "Dealership Name", placeholder: "Enter dealership name" }
+    { name: "scanText", label: "Scan Title", placeholder: "Enter scan button text" },
+    { name: "subText", label: "Scan Text", placeholder: "Enter text below scan button" },
+    { name: "dealer", label: "Dealership Logo", placeholder: "Enter dealership name" }
   ];
 
   return (
@@ -521,7 +526,7 @@ const Popup: React.FC = () => {
       <h1 className="text-2xl font-bold text-center mb-6">QR Code Generator</h1>
 
       {/* Form Fields - only vehicle info, no QR text fields */}
-      <div className="space-y-4 mb-8">
+      <div className="space-y-4 mb-6">
         {formFields.map((field) => (
           <div key={field.name} className="grid grid-cols-3 items-center gap-4">
             <label className="font-medium text-neutral-800 text-right">
@@ -537,6 +542,55 @@ const Popup: React.FC = () => {
             />
           </div>
         ))}
+
+        {/* Divider Line with OR */}
+        <div className="grid grid-cols-3 items-center gap-4">
+          <div className="col-span-3 flex items-center justify-center">
+            <div className="flex-grow border-t-1 border-neutral-300"></div>
+            <span className="mx-4 text-neutral-600">or</span>
+            <div className="flex-grow border-t-1 border-neutral-300"></div>
+          </div>
+        </div>
+
+        {/* Import Logo Field */}
+        <div className="flex justify-center items-center gap-4 pl-16">
+          <div className="col-span-2">
+            <input
+              type="file"
+              accept="image/*"
+              className="file:mr-2 file:py-0.5 file:px-2 file:rounded file:border file:border-gray-400 file:text-sm file:bg-gray-200 hover:file:bg-gray-300 file:cursor-pointer cursor-pointer w-full text-center"
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* Print Position Selector */}
+      <div className="grid grid-cols-3 items-center gap-4 mb-6">
+        <label className="font-medium text-neutral-800 text-right">
+          Print Position:
+        </label>
+        <div className="col-span-2">
+          <div className="relative" style={{ width: '120px', height: '168px' }}>
+            <div className="absolute inset-0 border-1 border-black rounded-lg"></div>
+            <div className="grid grid-cols-2 grid-rows-2 h-full">
+              {[1, 2, 3, 4].map((position) => (
+                <button
+                  key={position}
+                  type="button"
+                  onClick={() => {
+                    console.log('Selecting position:', position);
+                    setSelectedPosition(position);
+                  }}
+                  className={`relative z-10 flex items-center justify-center text-xl font-bold border border-black m-0.5 rounded-md transition-colors ${
+                    selectedPosition === position ? 'bg-black text-white' : 'bg-white text-black hover:bg-gray-100'
+                  }`}
+                >
+                  {position}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* Action Buttons */}

@@ -26019,6 +26019,7 @@ const Popup = () => {
     scanText: "SCAN ME",
     subText: "FOR INFO + PRICE"
   });
+  const [selectedPosition, setSelectedPosition] = reactExports.useState(1);
   const [url, setUrl] = reactExports.useState("");
   const [qrCodeSrc, setQrCodeSrc] = reactExports.useState("");
   const [isGenerating, setIsGenerating] = reactExports.useState(false);
@@ -26421,28 +26422,64 @@ const Popup = () => {
     { name: "title", label: "Vehicle Title", placeholder: "Enter vehicle make, model, year" },
     { name: "stock", label: "Stock Number", placeholder: "Enter stock number" },
     { name: "miles", label: "Miles", placeholder: "Enter vehicle mileage" },
-    { name: "dealer", label: "Dealership Name", placeholder: "Enter dealership name" }
+    { name: "scanText", label: "Scan Title", placeholder: "Enter scan button text" },
+    { name: "subText", label: "Scan Text", placeholder: "Enter text below scan button" },
+    { name: "dealer", label: "Dealership Logo", placeholder: "Enter dealership name" }
   ];
   return /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "max-w-xl mx-auto p-6 bg-neutral-50 rounded-lg shadow-md", children: [
     /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "flex justify-center mb-2", children: /* @__PURE__ */ jsxRuntimeExports.jsx("img", { src: "./logo.jpeg", alt: "DealerQRCode Logo", className: "h-24" }) }),
     /* @__PURE__ */ jsxRuntimeExports.jsx("h1", { className: "text-2xl font-bold text-center mb-6", children: "QR Code Generator" }),
-    /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "space-y-4 mb-8", children: formFields.map((field) => /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "grid grid-cols-3 items-center gap-4", children: [
-      /* @__PURE__ */ jsxRuntimeExports.jsxs("label", { className: "font-medium text-neutral-800 text-right", children: [
-        field.label,
-        ":"
-      ] }),
-      /* @__PURE__ */ jsxRuntimeExports.jsx(
+    /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "space-y-4 mb-6", children: [
+      formFields.map((field) => /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "grid grid-cols-3 items-center gap-4", children: [
+        /* @__PURE__ */ jsxRuntimeExports.jsxs("label", { className: "font-medium text-neutral-800 text-right", children: [
+          field.label,
+          ":"
+        ] }),
+        /* @__PURE__ */ jsxRuntimeExports.jsx(
+          "input",
+          {
+            type: "text",
+            name: field.name,
+            placeholder: field.placeholder,
+            value: formData[field.name],
+            onChange: handleInputChange,
+            className: "col-span-2 px-4 py-2 border border-neutral-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-neutral-800 focus:bg-white transition-colors"
+          }
+        )
+      ] }, field.name)),
+      /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "grid grid-cols-3 items-center gap-4", children: /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "col-span-3 flex items-center justify-center", children: [
+        /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "flex-grow border-t-1 border-neutral-300" }),
+        /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "mx-4 text-neutral-600", children: "or" }),
+        /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "flex-grow border-t-1 border-neutral-300" })
+      ] }) }),
+      /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "flex justify-center items-center gap-4 pl-16", children: /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "col-span-2", children: /* @__PURE__ */ jsxRuntimeExports.jsx(
         "input",
         {
-          type: "text",
-          name: field.name,
-          placeholder: field.placeholder,
-          value: formData[field.name],
-          onChange: handleInputChange,
-          className: "col-span-2 px-4 py-2 border border-neutral-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-neutral-800 focus:bg-white transition-colors"
+          type: "file",
+          accept: "image/*",
+          className: "file:mr-2 file:py-0.5 file:px-2 file:rounded file:border file:border-gray-400 file:text-sm file:bg-gray-200 hover:file:bg-gray-300 file:cursor-pointer cursor-pointer w-full text-center"
         }
-      )
-    ] }, field.name)) }),
+      ) }) })
+    ] }),
+    /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "grid grid-cols-3 items-center gap-4 mb-6", children: [
+      /* @__PURE__ */ jsxRuntimeExports.jsx("label", { className: "font-medium text-neutral-800 text-right", children: "Print Position:" }),
+      /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "col-span-2", children: /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "relative", style: { width: "120px", height: "168px" }, children: [
+        /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "absolute inset-0 border-1 border-black rounded-lg" }),
+        /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "grid grid-cols-2 grid-rows-2 h-full", children: [1, 2, 3, 4].map((position2) => /* @__PURE__ */ jsxRuntimeExports.jsx(
+          "button",
+          {
+            type: "button",
+            onClick: () => {
+              console.log("Selecting position:", position2);
+              setSelectedPosition(position2);
+            },
+            className: `relative z-10 flex items-center justify-center text-xl font-bold border border-black m-0.5 rounded-md transition-colors ${selectedPosition === position2 ? "bg-black text-white" : "bg-white text-black hover:bg-gray-100"}`,
+            children: position2
+          },
+          position2
+        )) })
+      ] }) })
+    ] }),
     /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex gap-4 mb-6", children: [
       /* @__PURE__ */ jsxRuntimeExports.jsx(
         "button",

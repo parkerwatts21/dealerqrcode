@@ -1,7 +1,7 @@
 {
     "manifest_version": 3,
     "name": "dealerqrcode",
-    "version": "1.0",
+    "version": "4.0",
     "description": "A Chrome extension to generate dealership QR codes",
     "action": {
       "default_popup": "popup.html",
