@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import QRCode from "qrcode";
 import html2canvas from "html2canvas-pro";
-import { jsPDF } from "jspdf";
 
 // Import Chrome types
 /// <reference types="chrome"/>
@@ -100,6 +99,12 @@ const storage = {
   }
 };
 
+// Add this helper function near the top of the file, after the imports
+const truncateTitle = (title: string) => {
+  const maxLength = 36; // Length of "2022 GMC YUKON XL DENALI 2022 IFNIEFFE"
+  return title.length > maxLength ? title.substring(0, maxLength) : title;
+};
+
 const Popup: React.FC = () => {
   // State management for form inputs (empty by default)
   const [formData, setFormData] = useState<FormDataType>({
@@ -167,14 +172,14 @@ const Popup: React.FC = () => {
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormData(prev => {
+      const newValue = name === 'title' ? truncateTitle(value) : value;
       const newData = {
         ...prev,
-        [name as FormField]: value
+        [name as FormField]: newValue
       };
       
       // Save settings when they change
       if (name === 'scanText' || name === 'subText' || name === 'dealer') {
-        // If dealer name is being changed, mark it as customized
         const isCustomizingDealer = name === 'dealer' && value !== '';
         if (isCustomizingDealer) {
           setIsDealerCustomized(true);
@@ -232,15 +237,6 @@ const Popup: React.FC = () => {
       dealer: formData.dealer,
       isDealerCustomized: false
     });
-  };
-
-  // Generate QR code on button click
-  const generateQRCode = () => {
-    if (!url) {
-      setErrorMessage("Error: No URL available");
-      return;
-    }
-    generateQRCodeFromUrl(url);
   };
 
   // Initialize the app with the current tab URL
@@ -333,7 +329,7 @@ const Popup: React.FC = () => {
                 setFormData(prevData => {
                   const newData = {
                     ...prevData,
-                    ...(scrapedData.title && { title: scrapedData.title }),
+                    ...(scrapedData.title && { title: truncateTitle(scrapedData.title) }),
                     ...(scrapedData.stock && { stock: scrapedData.stock }),
                     ...(scrapedData.miles && { miles: scrapedData.miles })
                   };
@@ -627,7 +623,7 @@ const Popup: React.FC = () => {
 
   // Preview values 
   const preview = {
-    title: formData.title || "Vehicle Title",
+    title: truncateTitle(formData.title) || "Vehicle Title",
     stock: formData.stock || "",
     miles: formData.miles || "0",
     dealer: formData.dealer || "Company Name",
@@ -641,15 +637,15 @@ const Popup: React.FC = () => {
       return;
     }
   
-    // Ensure the QR code is generated before capturing the PDF
+    // Ensure the QR code is generated before capturing
     if (!qrCodeSrc) {
       console.warn("⚠️ QR Code not available yet, regenerating...");
       generateQRCodeFromUrl(url);
   
-      // Wait for QR code to generate before capturing PDF
+      // Wait for QR code to generate before capturing
       setTimeout(() => {
         if (qrCodeSrc) {
-          console.log("✅ QR Code ready, capturing PDF...");
+          console.log("✅ QR Code ready, capturing...");
           captureAndDownload();
         } else {
           alert("Error: QR Code failed to generate. Try again.");
@@ -671,37 +667,102 @@ const Popup: React.FC = () => {
     console.log("📸 Capturing preview as image...");
 
     try {
-        const canvas = await html2canvas(previewRef.current, {
-            scale: 4, // Increase resolution
-            useCORS: true, // Ensure external images load correctly
-            backgroundColor: null, // Preserve transparency if needed
+        // Create a canvas for the full page (8.5 x 11 inches at 300 DPI)
+        const fullCanvas = document.createElement('canvas');
+        const dpi = 300;
+        fullCanvas.width = 8.5 * dpi; // 8.5 inches * 300 DPI
+        fullCanvas.height = 11 * dpi; // 11 inches * 300 DPI
+        const fullCtx = fullCanvas.getContext('2d');
+        
+        if (!fullCtx) {
+            throw new Error("Could not get canvas context");
+        }
+
+        // Set white background
+        fullCtx.fillStyle = 'white';
+        fullCtx.fillRect(0, 0, fullCanvas.width, fullCanvas.height);
+
+        // Capture the QR code preview
+        const previewCanvas = await html2canvas(previewRef.current, {
+            scale: 4,
+            useCORS: true,
+            backgroundColor: null,
             logging: false,
         });
 
-        console.log("✅ Image captured, converting to PDF...");
-        const imgData = canvas.toDataURL("image/png", 1.0);
+        // Define page margins and spacing
+        const pageMargin = 0.5 * dpi; // 0.5 inch margin
 
-        // Calculate aspect ratio for dynamic PDF size
-        const imgWidth = 3.0; // 3 inches
-        const imgHeight = (canvas.height / canvas.width) * imgWidth; // Maintain aspect ratio
+        // Calculate usable area dimensions (excluding margins)
+        const usableWidth = fullCanvas.width - (2 * pageMargin);
+        const usableHeight = fullCanvas.height - (2 * pageMargin);
 
-        const pdf = new jsPDF({
-            orientation: "portrait",
-            unit: "in",
-            format: [imgWidth, imgHeight], // Adjust based on preview size
-        });
+        // Calculate dimensions for each quadrant (including spacing)
+        const quadrantWidth = 3.75 * dpi; // Exactly 3.75 inches
+        const quadrantHeight = 5 * dpi; // Exactly 5 inches
+        const remainingWidth = usableWidth - (2 * quadrantWidth);
+        const remainingHeight = usableHeight - (2 * quadrantHeight);
+        const horizontalSpacing = remainingWidth / 3; // Divide remaining space
+        const verticalSpacing = remainingHeight / 3;
 
-        pdf.addImage(imgData, "PNG", 0, 0, imgWidth, imgHeight, undefined, "FAST");
+        // Calculate position based on selected quadrant
+        let x = pageMargin;
+        let y = pageMargin;
 
+        switch (selectedPosition) {
+            case 1: // Top left
+                x = pageMargin + horizontalSpacing;
+                y = pageMargin + verticalSpacing;
+                break;
+            case 2: // Top right
+                x = pageMargin + quadrantWidth + (2 * horizontalSpacing);
+                y = pageMargin + verticalSpacing;
+                break;
+            case 3: // Bottom left
+                x = pageMargin + horizontalSpacing;
+                y = pageMargin + quadrantHeight + (2 * verticalSpacing);
+                break;
+            case 4: // Bottom right
+                x = pageMargin + quadrantWidth + (2 * horizontalSpacing);
+                y = pageMargin + quadrantHeight + (2 * verticalSpacing);
+                break;
+        }
+
+        // Scale the preview to fit exactly in the 3.75x5 inch space
+        const scaledWidth = 3.75 * dpi;
+        const scaledHeight = 5 * dpi;
+
+        // Draw the preview onto the full canvas
+        fullCtx.save(); // Save the current context state
+        fullCtx.filter = 'grayscale(100%)'; // Apply grayscale filter
+        fullCtx.drawImage(
+            previewCanvas,
+            x,
+            y,
+            scaledWidth,
+            scaledHeight
+        );
+        fullCtx.restore(); // Restore the context state
+
+        // Convert to JPEG
+        const jpegData = fullCanvas.toDataURL('image/jpeg', 1.0);
+
+        // Create download link
+        const downloadLink = document.createElement('a');
         const filename = formData?.title
-            ? `${formData.title.replace(/[^a-z0-9]/gi, "-").toLowerCase()}_${formData.stock || "000000"}_QR.pdf`
-            : "qr_code.pdf";
+            ? `${formData.title.replace(/[^a-z0-9]/gi, "-").toLowerCase()}_${formData.stock || "000000"}.jpg`
+            : "qr_code.jpg";
 
-        pdf.save(filename);
-        console.log("✅ PDF saved successfully!");
+        downloadLink.href = jpegData;
+        downloadLink.download = filename;
+        document.body.appendChild(downloadLink);
+        downloadLink.click();
+        document.body.removeChild(downloadLink);
+
+        console.log("✅ JPEG saved successfully!");
     } catch (error) {
-        console.error("❌ Error generating PDF:", error);
-        alert("Error generating PDF. Please try again.");
+        console.error("❌ Error generating JPEG:", error);
+        alert("Error generating JPEG. Please try again.");
     }
   };
 
@@ -717,7 +778,7 @@ const Popup: React.FC = () => {
   ];
 
   return (
-    <div className="max-w-xl mx-auto p-6 bg-neutral-50 rounded-lg shadow-md">
+    <div className="max-w-4xl mx-auto p-6 bg-neutral-50 rounded-lg shadow-md">
       <div className="flex justify-center mb-2">
         <img src="./logo.jpeg" alt="DealerQRCode Logo" className="h-24" />
       </div>
@@ -812,21 +873,21 @@ const Popup: React.FC = () => {
       </div>
 
       {/* Action Buttons */}
-      <div className="flex gap-4 mb-6">
-        <button 
-          onClick={generateQRCode}
-          disabled={isGenerating || !url}
-          className="flex-1 py-3 rounded-lg px-4 text-white bg-black hover:bg-neutral-700 transition duration-200 font-semibold disabled:bg-neutral-400"
-        >
-          {isGenerating ? "Generating..." : "Generate QR Code"}
-        </button>
+      <div className="flex gap-4 mb-6 text-center justify-center">
         <button
           onClick={downloadPDF}
           disabled={!qrCodeSrc}
-          className="flex-1 py-3 rounded-lg px-4 text-white bg-black hover:bg-neutral-700 transition duration-200 font-semibold disabled:bg-neutral-400"
+          className="w-3/4 py-3 rounded-lg px-4 text-white bg-black hover:bg-neutral-700 transition duration-200 font-semibold disabled:bg-neutral-400"
         >
           Download PDF
         </button>
+      </div>
+
+      {/* Divider Line */}
+      <div className="grid grid-cols-3 items-center gap-4 mb-6">
+        <div className="col-span-3 flex items-center justify-center">
+          <div className="flex-grow border-t-1 border-neutral-300"></div>
+        </div>
       </div>
 
       {/* Preview Section */}
@@ -834,67 +895,71 @@ const Popup: React.FC = () => {
       <div className="flex justify-center">
         <div 
           ref={previewRef} 
-          className="bg-white text-black rounded-lg p-8 w-90 mx-auto shadow-md border border-gray-200"
-          style={{ aspectRatio: "3/5" }} // Maintain 3:5 aspect ratio
+          className="bg-white text-black rounded-lg p-6 w-[375px] mx-auto shadow-md"
+          style={{ aspectRatio: "4/5" }}
         >
           {/* Vehicle Title */}
-          <h2 className="text-2xl font-black text-center mb-2 mt-1">{preview.title}</h2>
+          <h2 className="text-[28px] font-black text-center leading-tight mb-1">{preview.title}</h2>
 
           {/* Stock & Miles on same line */}
-          <div className="mb-7 text-center">
-            <span className="font-black text-[16px]">STOCK #:</span> <span className="text-[16px]">{preview.stock}</span>
+          <div className="mb-3 text-center">
+            <span className="font-black text-[20px]">STOCK #:</span> <span className="text-[20px]">{preview.stock}</span>
             <span className="mx-2"></span>
-            <span className="font-black text-[16px]">MILES:</span> <span className="text-[16px]">{preview.miles}</span>
+            <span className="font-black text-[20px]">MILES:</span> <span className="text-[20px]">{preview.miles}</span>
           </div>
 
-          {/* QR Code Container */}
-          <div className="mb-5 relative">
-            <div className="relative">
+          {/* QR Code Container - centered but narrower than text */}
+          <div className="mb-4 flex justify-center">
+            <div className="w-[240px]"> {/* Container to constrain QR section width */}
               {/* Scan Button */}
-              <div className="bg-black text-white py-2 px-8 rounded-xl text-center mx-auto w-[220px] z-10 relative">
-                <div className="text-2xl font-bold">{preview.scanText}</div>
-                <div className="text-lg">{preview.subText}</div>
+              <div className="bg-black text-white py-1.5 px-4 rounded-xl text-center mx-auto w-[180px] z-10 relative">
+                <div className="text-lg font-bold">{preview.scanText}</div>
+                <div className="text-base">{preview.subText}</div>
               </div>
               
               {/* QR Code Container */}
-              <div className="border-6 border-black rounded-3xl p-0 pt-4 flex justify-center items-center mt-[-22px] mx-auto w-70 h-70">
-                <div className="flex justify-center items-center w-full h-full">
-                  {isGenerating ? (
-                    <div className="text-gray-400">Generating QR code...</div>
-                  ) : errorMessage ? (
-                    <div className="text-red-500 text-center">{errorMessage}</div>
-                  ) : qrCodeSrc ? (
-                    <img 
-                      src={qrCodeSrc} 
-                      alt="QR Code" 
-                      width="220" 
-                      height="220" 
-                      className="max-w-full max-h-full"
-                    />
-                  ) : (
-                    <div className="text-gray-400 text-center">QR code will appear here</div>
-                  )}
+              <div className="relative w-full flex justify-center">
+                <div className="border-6 border-black rounded-3xl p-3 flex justify-center items-center mt-[-22px] w-56 h-56">
+                  <div className="flex justify-center items-center w-full h-full">
+                    {isGenerating ? (
+                      <div className="text-gray-400">Generating QR code...</div>
+                    ) : errorMessage ? (
+                      <div className="text-red-500 text-center">{errorMessage}</div>
+                    ) : qrCodeSrc ? (
+                      <img 
+                        src={qrCodeSrc} 
+                        alt="QR Code" 
+                        width="174" 
+                        height="174" 
+                        className="max-w-full max-h-full pt-3"
+                      />
+                    ) : (
+                      <div className="text-gray-400 text-center">QR code will appear here</div>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>
           </div>
 
           {/* Dealer Name */}
-          <div className="justify-center border-4 border-black rounded-lg px-4 py-2 text-center mx-auto w-fit">
-            {logoUrl ? (
+          {logoUrl ? (
+            <div className="justify-center text-center mx-auto w-fit">
               <img 
                 src={logoUrl.split(';filename=')[0]} 
                 alt="Dealer Logo" 
-                className="h-8 object-contain"
+                className="h-12 w-auto object-contain grayscale"
                 onError={(e) => {
                   console.error('Error loading logo:', e);
                   handleRemoveLogo();
                 }}
               />
-            ) : (
-              <span className="font-black text-lg">{preview.dealer}</span>
-            )}
-          </div>
+            </div>
+          ) : (
+            <div className="justify-center border-4 border-black rounded-lg px-4 py-1.5 text-center mx-auto w-fit">
+              <span className="font-black text-base">{preview.dealer}</span>
+            </div>
+          )}
         </div>
       </div>
     </div>
