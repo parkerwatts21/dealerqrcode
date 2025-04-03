@@ -18260,23 +18260,25 @@ const Popup = () => {
       const remainingHeight = usableHeight - 2 * quadrantHeight;
       const horizontalSpacing = remainingWidth / 3;
       const verticalSpacing = remainingHeight / 3;
+      const leftQuadrantOffset = -0.228 * dpi;
+      const rightQuadrantOffset = 0.228 * dpi;
       let x = pageMargin;
       let y = pageMargin;
       switch (selectedPosition) {
         case 1:
-          x = pageMargin + horizontalSpacing;
+          x = pageMargin + horizontalSpacing + leftQuadrantOffset;
           y = pageMargin + verticalSpacing;
           break;
         case 2:
-          x = pageMargin + quadrantWidth + 2 * horizontalSpacing;
+          x = pageMargin + quadrantWidth + 2 * horizontalSpacing + rightQuadrantOffset;
           y = pageMargin + verticalSpacing;
           break;
         case 3:
-          x = pageMargin + horizontalSpacing;
+          x = pageMargin + horizontalSpacing + leftQuadrantOffset;
           y = pageMargin + quadrantHeight + 2 * verticalSpacing;
           break;
         case 4:
-          x = pageMargin + quadrantWidth + 2 * horizontalSpacing;
+          x = pageMargin + quadrantWidth + 2 * horizontalSpacing + rightQuadrantOffset;
           y = pageMargin + quadrantHeight + 2 * verticalSpacing;
           break;
       }

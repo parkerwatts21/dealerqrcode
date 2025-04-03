@@ -705,25 +705,29 @@ const Popup: React.FC = () => {
         const horizontalSpacing = remainingWidth / 3; // Divide remaining space
         const verticalSpacing = remainingHeight / 3;
 
+        // Add offset for quadrant 1 and 2
+        const leftQuadrantOffset = -0.228 * dpi; // Move left by 0.25 inches
+        const rightQuadrantOffset = 0.228 * dpi; // Move right by 0.25 inches
+
         // Calculate position based on selected quadrant
         let x = pageMargin;
         let y = pageMargin;
 
         switch (selectedPosition) {
             case 1: // Top left
-                x = pageMargin + horizontalSpacing;
+                x = pageMargin + horizontalSpacing + leftQuadrantOffset;
                 y = pageMargin + verticalSpacing;
                 break;
             case 2: // Top right
-                x = pageMargin + quadrantWidth + (2 * horizontalSpacing);
+                x = pageMargin + quadrantWidth + (2 * horizontalSpacing) + rightQuadrantOffset;
                 y = pageMargin + verticalSpacing;
                 break;
             case 3: // Bottom left
-                x = pageMargin + horizontalSpacing;
+                x = pageMargin + horizontalSpacing + leftQuadrantOffset;
                 y = pageMargin + quadrantHeight + (2 * verticalSpacing);
                 break;
             case 4: // Bottom right
-                x = pageMargin + quadrantWidth + (2 * horizontalSpacing);
+                x = pageMargin + quadrantWidth + (2 * horizontalSpacing) + rightQuadrantOffset;
                 y = pageMargin + quadrantHeight + (2 * verticalSpacing);
                 break;
         }
