@@ -17701,8 +17701,8 @@ var parseBackgroundColor = function(context, element, backgroundColorOverride) {
   return element === ownerDocument.documentElement ? isTransparent(documentBackgroundColor) ? isTransparent(bodyBackgroundColor) ? defaultBackgroundColor : bodyBackgroundColor : documentBackgroundColor : defaultBackgroundColor;
 };
 const DEFAULT_SETTINGS = {
-  scanText: "SCAN ME",
-  subText: "FOR INFO + PRICE",
+  scanText: "I'M FOR SALE",
+  subText: "SCAN ME",
   dealer: "",
   // Empty by default
   logoUrl: "",
@@ -18406,19 +18406,19 @@ const Popup = () => {
         className: "bg-white text-black rounded-lg p-6 w-[375px] mx-auto shadow-md",
         style: { aspectRatio: "4/5" },
         children: [
-          /* @__PURE__ */ jsxRuntimeExports.jsx("h2", { className: "text-[20px] font-bold text-center leading-tight mb-1", children: preview.title }),
-          /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "mb-8 text-center", children: [
-            /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "font-bold text-[16px]", children: "STOCK #:" }),
+          /* @__PURE__ */ jsxRuntimeExports.jsx("h2", { className: "text-[16px] font-bold text-center leading-tight mb-1", children: preview.title }),
+          /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "text-center", children: [
+            /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "font-bold text-[12px]", children: "STOCK #:" }),
             " ",
-            /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "text-[16px]", children: preview.stock }),
+            /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "text-[12px]", children: preview.stock }),
             /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "mx-2" }),
-            /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "font-bold text-[16px]", children: "MILES:" }),
+            /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "font-bold text-[12px]", children: "MILES:" }),
             " ",
-            /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "text-[16px]", children: preview.miles })
+            /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "text-[12px]", children: preview.miles })
           ] }),
-          /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "text-center mb-0.5", children: /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "text-[42px]", children: "I'M FOR SALE" }) }),
-          /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "text-center mb-4", children: /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "text-[42px]", children: preview.scanText }) }),
-          /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "relative w-full flex justify-center mb-4", children: /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "p-3 flex justify-center items-center w-56 h-56", children: /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "flex justify-center items-center w-full h-full", children: isGenerating ? /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "text-gray-400", children: "Generating QR code..." }) : errorMessage ? /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "text-red-500 text-center", children: errorMessage }) : qrCodeSrc ? /* @__PURE__ */ jsxRuntimeExports.jsx(
+          /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "text-center mt-[-6px]", children: /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "text-[42px]", children: "I'M FOR SALE" }) }),
+          /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "text-center mt-[-20px] mb-[-12px]", children: /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "text-[42px]", children: preview.scanText }) }),
+          /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "relative w-full flex justify-center", children: /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "p-3 flex justify-center items-center w-56 h-56", children: /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "flex justify-center items-center w-full h-full", children: isGenerating ? /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "text-gray-400", children: "Generating QR code..." }) : errorMessage ? /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "text-red-500 text-center", children: errorMessage }) : qrCodeSrc ? /* @__PURE__ */ jsxRuntimeExports.jsx(
             "img",
             {
               src: qrCodeSrc,
@@ -18428,12 +18428,12 @@ const Popup = () => {
               className: "max-w-full max-h-full"
             }
           ) : /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "text-gray-400 text-center", children: "QR code will appear here" }) }) }) }),
-          logoUrl ? /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "justify-center text-center mx-auto w-fit", children: /* @__PURE__ */ jsxRuntimeExports.jsx(
+          logoUrl ? /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "justify-center text-center mx-auto w-fit mt-[-75px] mb-[-95px]", children: /* @__PURE__ */ jsxRuntimeExports.jsx(
             "img",
             {
               src: logoUrl.split(";filename=")[0],
               alt: "Dealer Logo",
-              className: "h-32 w-auto object-contain",
+              className: "h-64 w-auto object-contain",
               onError: (e2) => {
                 console.error("Error loading logo:", e2);
                 handleRemoveLogo();

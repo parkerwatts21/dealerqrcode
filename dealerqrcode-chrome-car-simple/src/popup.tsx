@@ -35,8 +35,8 @@ interface Settings {
 
 // Default values for settings
 const DEFAULT_SETTINGS: Settings = {
-  scanText: "SCAN ME",
-  subText: "FOR INFO + PRICE",
+  scanText: "I'M FOR SALE",
+  subText: "SCAN ME",
   dealer: "", // Empty by default
   logoUrl: "",
   isDealerCustomized: false
@@ -902,27 +902,27 @@ const Popup: React.FC = () => {
           style={{ aspectRatio: "4/5" }}
         >
           {/* Vehicle Title */}
-          <h2 className="text-[20px] font-bold text-center leading-tight mb-1">{preview.title}</h2>
+          <h2 className="text-[16px] font-bold text-center leading-tight mb-1">{preview.title}</h2>
 
           {/* Stock & Miles on same line */}
-          <div className="mb-8 text-center">
-            <span className="font-bold text-[16px]">STOCK #:</span> <span className="text-[16px]">{preview.stock}</span>
+          <div className="text-center">
+            <span className="font-bold text-[12px]">STOCK #:</span> <span className="text-[12px]">{preview.stock}</span>
             <span className="mx-2"></span>
-            <span className="font-bold text-[16px]">MILES:</span> <span className="text-[16px]">{preview.miles}</span>
+            <span className="font-bold text-[12px]">MILES:</span> <span className="text-[12px]">{preview.miles}</span>
           </div>
 
           {/* "I'M FOR SALE" text */}
-          <div className="text-center mb-0.5">
+          <div className="text-center mt-[-6px]">
             <div className="text-[42px]">I'M FOR SALE</div>
           </div>
 
           {/* SCAN ME text */}
-          <div className="text-center mb-4">
+          <div className="text-center mt-[-20px] mb-[-12px]">
             <div className="text-[42px]">{preview.scanText}</div>
           </div>
           
           {/* QR Code Container */}
-          <div className="relative w-full flex justify-center mb-4">
+          <div className="relative w-full flex justify-center">
             <div className="p-3 flex justify-center items-center w-56 h-56">
               <div className="flex justify-center items-center w-full h-full">
                 {isGenerating ? (
@@ -946,11 +946,11 @@ const Popup: React.FC = () => {
 
           {/* Dealer Logo */}
           {logoUrl ? (
-            <div className="justify-center text-center mx-auto w-fit">
+            <div className="justify-center text-center mx-auto w-fit mt-[-75px] mb-[-95px]">
               <img 
                 src={logoUrl.split(';filename=')[0]} 
                 alt="Dealer Logo" 
-                className="h-32 w-auto object-contain"
+                className="h-64 w-auto object-contain"
                 onError={(e) => {
                   console.error('Error loading logo:', e);
                   handleRemoveLogo();
