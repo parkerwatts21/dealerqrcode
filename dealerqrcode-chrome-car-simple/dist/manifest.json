@@ -1,6 +1,6 @@
 {
     "manifest_version": 3,
-    "name": "dealerqrcode",
+    "name": "dealerqrcode - Car Simple",
     "version": "4.0",
     "description": "A Chrome extension to generate dealership QR codes",
     "action": {

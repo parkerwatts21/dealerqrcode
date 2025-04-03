@@ -913,12 +913,12 @@ const Popup: React.FC = () => {
 
           {/* "I'M FOR SALE" text */}
           <div className="text-center mt-[-6px]">
-            <div className="text-[42px]">I'M FOR SALE</div>
+            <div className="text-[42px]">{preview.scanText}</div>
           </div>
 
           {/* SCAN ME text */}
           <div className="text-center mt-[-20px] mb-[-12px]">
-            <div className="text-[42px]">{preview.scanText}</div>
+            <div className="text-[42px]">{preview.subText}</div>
           </div>
           
           {/* QR Code Container */}

@@ -18416,8 +18416,8 @@ const Popup = () => {
             " ",
             /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "text-[12px]", children: preview.miles })
           ] }),
-          /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "text-center mt-[-6px]", children: /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "text-[42px]", children: "I'M FOR SALE" }) }),
-          /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "text-center mt-[-20px] mb-[-12px]", children: /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "text-[42px]", children: preview.scanText }) }),
+          /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "text-center mt-[-6px]", children: /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "text-[42px]", children: preview.scanText }) }),
+          /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "text-center mt-[-20px] mb-[-12px]", children: /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "text-[42px]", children: preview.subText }) }),
           /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "relative w-full flex justify-center", children: /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "p-3 flex justify-center items-center w-56 h-56", children: /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "flex justify-center items-center w-full h-full", children: isGenerating ? /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "text-gray-400", children: "Generating QR code..." }) : errorMessage ? /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "text-red-500 text-center", children: errorMessage }) : qrCodeSrc ? /* @__PURE__ */ jsxRuntimeExports.jsx(
             "img",
             {
