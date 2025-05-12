@@ -34,6 +34,7 @@ export default function Dashboard() {
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [printModalIdx, setPrintModalIdx] = useState<number | null>(null);
   const [printFormat, setPrintFormat] = useState<'Small' | 'Large'>('Small');
+  const [printPosition, setPrintPosition] = useState(1); // 1-4 for quadrant
 
   useEffect(() => {
     if (!user) {
@@ -437,19 +438,49 @@ export default function Dashboard() {
         <div className="fixed inset-0 z-50 flex items-center justify-center">
           <Dialog.Panel className="bg-white border border-neutral-200 rounded-2xl p-6 w-full max-w-sm shadow-2xl">
             <Dialog.Title className="text-base font-bold mb-3 text-neutral-900">Print Format</Dialog.Title>
-            <div className="flex gap-4 mb-6">
-              <button
-                onClick={() => handleFormatSelect('Small')}
-                className={`px-4 py-2 rounded-lg font-semibold text-sm border transition ${printFormat === 'Small' ? 'bg-neutral-900 text-white border-neutral-900' : 'bg-neutral-100 text-neutral-900 border-neutral-200 hover:bg-neutral-200'}`}
-              >
-                Small
-              </button>
-              <button
-                onClick={() => handleFormatSelect('Large')}
-                className={`px-4 py-2 rounded-lg font-semibold text-sm border transition ${printFormat === 'Large' ? 'bg-neutral-900 text-white border-neutral-900' : 'bg-neutral-100 text-neutral-900 border-neutral-200 hover:bg-neutral-200'}`}
-              >
-                Large
-              </button>
+            <div className="space-y-3 mb-6">
+              <label className="flex items-center space-x-3 p-3 rounded-lg border border-neutral-200 cursor-pointer hover:bg-neutral-50">
+                <input
+                  type="radio"
+                  name="printFormat"
+                  checked={printFormat === 'Small'}
+                  onChange={() => handleFormatSelect('Small')}
+                  className="w-4 h-4 text-neutral-900 focus:ring-neutral-500"
+                />
+                <span className="text-sm font-medium text-neutral-900">Small</span>
+              </label>
+              {printFormat === 'Small' && (
+                <div className="flex items-center justify-center mb-2 pr-6">
+                  <span className="text-base font-medium text-neutral-900 mr-4 whitespace-nowrap">Print Position:</span>
+                  <div className="p-1 border-2 border-black rounded-2xl flex-shrink-0" style={{ width: '120px', height: '180px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'white' }}>
+                    <div className="grid grid-cols-2 grid-rows-2 gap-1 w-full h-full">
+                      {[1,2,3,4].map(pos => (
+                        <button
+                          key={pos}
+                          type="button"
+                          onClick={() => setPrintPosition(pos)}
+                          className={`rounded-lg border-2 flex items-center justify-center text-2xl font-bold transition-colors
+                            ${printPosition === pos ? 'bg-black text-white border-black' : 'bg-white text-black border-neutral-400 hover:bg-neutral-100'}`}
+                          style={{ width: '100%', height: '100%', aspectRatio: '3/4' }}
+                          aria-label={`Quadrant ${pos}`}
+                        >
+                          {pos}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
+              <label className="flex items-center space-x-3 p-3 rounded-lg border border-neutral-200 cursor-pointer hover:bg-neutral-50">
+                <input
+                  type="radio"
+                  name="printFormat"
+                  checked={printFormat === 'Large'}
+                  onChange={() => handleFormatSelect('Large')}
+                  className="w-4 h-4 text-neutral-900 focus:ring-neutral-500"
+                />
+                <span className="text-sm font-medium text-neutral-900">Large</span>
+              </label>
             </div>
             <div className="flex justify-end">
               <button onClick={handleDownload} className="px-4 py-2 rounded-lg bg-neutral-900 text-white font-semibold text-sm hover:bg-neutral-800 transition">Download</button>
