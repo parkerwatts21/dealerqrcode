@@ -1,25 +1,28 @@
-import type { Metadata } from "next";
+"use client";
+
 import { Inter } from "next/font/google";
 import "./globals.css";
 import { Navbar } from "@/components/navbar";
+import { usePathname } from "next/navigation";
+import { AuthProvider } from "@/contexts/AuthContext";
 
 const inter = Inter({ subsets: ["latin"] });
-
-export const metadata: Metadata = {
-  title: "Dealer QRCode | QR Solutions for Modern Dealerships",
-  description: "Streamline your dealership operations with our QR code system. Generate unique QR codes for each vehicle to provide instant access to vehicle information.",
-};
 
 export default function RootLayout({
   children,
 }: {
   children: React.ReactNode
 }) {
+  const pathname = usePathname();
+  const hideNavbar = pathname === "/signin" || pathname === "/signup" || pathname === "/dashboard";
+
   return (
     <html lang="en" className="h-full">
       <body className={`${inter.className} h-full`}>
-        <Navbar />
-        {children}
+        <AuthProvider>
+          {!hideNavbar && <Navbar />}
+          {children}
+        </AuthProvider>
       </body>
     </html>
   );

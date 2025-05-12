@@ -1,0 +1,454 @@
+"use client";
+
+import Image from 'next/image';
+import { useState, useRef, useEffect, Fragment } from 'react';
+import { useAuth } from '@/contexts/AuthContext';
+import { useRouter } from 'next/navigation';
+import { Dialog } from '@headlessui/react';
+import { supabase } from '@/lib/supabase';
+import { FiDownload } from 'react-icons/fi';
+import QRCode from 'qrcode';
+
+export default function Dashboard() {
+  const { user, signOut } = useAuth();
+  const router = useRouter();
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const profileRef = useRef(null);
+
+  // Vehicle state
+  const [vehicles, setVehicles] = useState<any[]>([]);
+  const [loadingVehicles, setLoadingVehicles] = useState(true);
+  const [editIdx, setEditIdx] = useState<number | null>(null);
+  const [editVehicle, setEditVehicle] = useState<any>(null);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [newVehicle, setNewVehicle] = useState({ title: '', stock: '', miles: '', url: '' });
+  const [deleteIdx, setDeleteIdx] = useState<number | null>(null);
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [printModalIdx, setPrintModalIdx] = useState<number | null>(null);
+  const [printFormat, setPrintFormat] = useState<'Small' | 'Large'>('Small');
+
+  useEffect(() => {
+    if (!user) {
+      router.push('/signin');
+    }
+  }, [user, router]);
+
+  // Fetch vehicles for current user
+  useEffect(() => {
+    if (!user) return;
+    const fetchVehicles = async () => {
+      setLoadingVehicles(true);
+      const { data, error } = await supabase
+        .from('vehicles')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: true });
+      if (!error) setVehicles(data || []);
+      setLoadingVehicles(false);
+    };
+    fetchVehicles();
+  }, [user]);
+
+  const handleSignOut = async () => {
+    try {
+      await signOut();
+      setDropdownOpen(false); // Close dropdown after sign out
+      router.push('/');
+    } catch (error) {
+      console.error('Error signing out:', error);
+    }
+  };
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (profileRef.current && !(profileRef.current as any).contains(event.target)) {
+        setDropdownOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  if (!user) {
+    return null;
+  }
+
+  // Get user's initials for avatar
+  const getInitials = (name: string) => {
+    return name
+      .split(' ')
+      .map(word => word[0])
+      .join('')
+      .toUpperCase();
+  };
+
+  const userName = user.user_metadata?.full_name || user.email?.split('@')[0] || 'User';
+  const initials = getInitials(userName);
+
+  // Edit handlers
+  const handleEdit = (idx: number) => {
+    setEditIdx(idx);
+    setEditVehicle({ ...vehicles[idx] });
+  };
+  const handleEditChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setEditVehicle({ ...editVehicle, [e.target.name]: e.target.value });
+  };
+  const handleEditSave = async () => {
+    if (!user || !editVehicle.qr_code_id) return;
+    const { data, error } = await supabase
+      .from('vehicles')
+      .update({
+        title: editVehicle.title,
+        stock: editVehicle.stock,
+        miles: editVehicle.miles,
+        url: editVehicle.url
+      })
+      .eq('qr_code_id', editVehicle.qr_code_id)
+      .eq('user_id', user.id)
+      .select();
+    if (error) {
+      console.error('Supabase update error:', error);
+      alert('Error updating vehicle: ' + error.message);
+      return;
+    }
+    if (data && data.length > 0) {
+      const updated = [...vehicles];
+      updated[editIdx!] = data[0];
+      setVehicles(updated);
+    }
+    setEditIdx(null);
+    setEditVehicle(null);
+  };
+  const handleEditCancel = () => {
+    setEditIdx(null);
+    setEditVehicle(null);
+  };
+
+  // Modal handlers
+  const handleModalChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setNewVehicle({ ...newVehicle, [e.target.name]: e.target.value });
+  };
+  const handleAddVehicle = async () => {
+    if (!user) return;
+    const { data, error } = await supabase
+      .from('vehicles')
+      .insert([{ ...newVehicle, user_id: user.id }])
+      .select();
+    if (error) {
+      console.error('Supabase insert error:', error);
+      alert('Error adding vehicle: ' + error.message);
+      return;
+    }
+    if (data && data.length > 0) {
+      setVehicles([...vehicles, data[0]]);
+    }
+    setNewVehicle({ title: '', stock: '', miles: '', url: '' });
+    setModalOpen(false);
+  };
+  const handleModalCancel = () => {
+    setNewVehicle({ title: '', stock: '', miles: '', url: '' });
+    setModalOpen(false);
+  };
+
+  // Delete handlers
+  const handleDelete = (idx: number) => {
+    setDeleteIdx(idx);
+    setDeleteModalOpen(true);
+  };
+  const confirmDelete = async () => {
+    if (deleteIdx === null) return;
+    const vehicle = vehicles[deleteIdx];
+    const { error } = await supabase
+      .from('vehicles')
+      .delete()
+      .eq('qr_code_id', vehicle.qr_code_id)
+      .eq('user_id', user.id);
+    if (error) {
+      alert('Error deleting vehicle: ' + error.message);
+      setDeleteModalOpen(false);
+      setDeleteIdx(null);
+      return;
+    }
+    setVehicles(vehicles.filter((_, idx) => idx !== deleteIdx));
+    setDeleteModalOpen(false);
+    setDeleteIdx(null);
+  };
+  const cancelDelete = () => {
+    setDeleteModalOpen(false);
+    setDeleteIdx(null);
+  };
+
+  const handleDownloadClick = (idx: number) => {
+    setPrintModalIdx(idx);
+    setPrintFormat('Small');
+  };
+  const closePrintModal = () => {
+    setPrintModalIdx(null);
+  };
+  const handleFormatSelect = (format: 'Small' | 'Large') => {
+    setPrintFormat(format);
+  };
+  const handleDownload = async () => {
+    if (printModalIdx === null) {
+      console.error('No vehicle selected for download');
+      return;
+    }
+    
+    const vehicle = vehicles[printModalIdx];
+    if (!vehicle || !vehicle.qr_code_id) {
+      console.error('Invalid vehicle data:', vehicle);
+      alert('Error: Invalid vehicle data');
+      return;
+    }
+
+    const qrCodeUrl = `https://dealerqrcode.com/dynamic/${vehicle.qr_code_id}`;
+    console.log('Generating QR code for URL:', qrCodeUrl);
+    
+    try {
+      // Generate QR code as data URL
+      const qrCodeDataUrl = await QRCode.toDataURL(qrCodeUrl, {
+        width: printFormat === 'Small' ? 300 : 600,
+        margin: 1,
+        color: {
+          dark: '#000000',
+          light: '#ffffff'
+        }
+      });
+      console.log('QR code generated successfully');
+
+      // Create a temporary link element
+      const link = document.createElement('a');
+      link.href = qrCodeDataUrl;
+      link.download = `qr-code-${vehicle.qr_code_id}-${printFormat.toLowerCase()}.png`;
+      console.log('Downloading file:', link.download);
+      
+      // Append to body, click, and remove
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      
+      console.log('Download initiated');
+      closePrintModal();
+    } catch (error) {
+      console.error('Error generating QR code:', error);
+      alert('Error generating QR code. Please try again.');
+    }
+  };
+
+  const isAddDisabled = !newVehicle.title || !newVehicle.stock || !newVehicle.miles || !newVehicle.url;
+
+  return (
+    <div className="flex min-h-screen bg-neutral-50">
+      {/* Sidebar */}
+      <aside className="w-64 bg-white border-r border-neutral-200 text-neutral-900 flex flex-col py-8 px-6">
+        <div>
+          <div className="flex items-center mb-10">
+            <Image src="/images/logo.svg" alt="Dealer QRCode" width={60} height={60} className="mr-2" />
+          </div>
+          <nav className="space-y-2">
+            <a
+              href="#"
+              className="flex items-center px-4 py-2 rounded-lg font-bold transition-colors bg-neutral-100 text-neutral-900 border border-neutral-200 text-sm"
+            >
+              <svg className="w-5 h-5 mr-3" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0h6" strokeLinecap="round" strokeLinejoin="round" /></svg>
+              Dashboard
+            </a>
+          </nav>
+        </div>
+      </aside>
+      {/* Main content */}
+      <main className="flex-1 p-0">
+        {/* Top navbar */}
+        <div className="w-full bg-white border-b border-neutral-200 flex justify-end items-center h-20 px-10 relative">
+          <div
+            ref={profileRef}
+            className="flex items-center gap-2 cursor-pointer select-none relative"
+            onClick={() => setDropdownOpen((open) => !open)}
+            tabIndex={0}
+          >
+            <img 
+              src={`https://ui-avatars.com/api/?name=${encodeURIComponent(userName)}&background=000000&color=ffffff&size=64`} 
+              alt={userName} 
+              className="w-9 h-9 rounded-full border-2 border-white" 
+            />
+            <span className="text-neutral-900 font-semibold text-sm">{userName}</span>
+            <svg className="w-4 h-4 text-neutral-400" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6" /></svg>
+            {/* Dropdown */}
+            {dropdownOpen && (
+              <div className="absolute right-0 top-10 w-36 bg-white border border-neutral-200 rounded-lg shadow-lg py-1 z-50">
+                <button 
+                  onClick={handleSignOut}
+                  className="w-full text-left px-3 py-1.5 text-sm text-neutral-900 hover:bg-neutral-100"
+                >
+                  Sign out
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+        <div className="p-10">
+          <div className="max-w-6xl mx-auto">
+            <div className="flex items-center justify-between mb-10">
+              <div>
+                <h2 className="text-xl font-bold text-neutral-900 mb-1">Dynamic QR Code</h2>
+                <p className="text-neutral-500 text-sm">Manage your vehicle QR codes. Each row represents a vehicle and its associated dynamic QR code URL.</p>
+              </div>
+              <button onClick={() => setModalOpen(true)} className="bg-neutral-900 text-white px-5 py-1.5 rounded-lg font-semibold shadow-sm hover:bg-neutral-800 transition-colors text-sm">Add vehicle</button>
+            </div>
+            <div className="overflow-x-auto rounded-xl border border-neutral-200 bg-white">
+              <table className="min-w-full divide-y divide-neutral-200 text-sm">
+                <thead>
+                  <tr>
+                    <th className="px-2 py-3 text-left pl-5 font-semibold text-neutral-900">QR Code Id</th>
+                    <th className="px-2 py-3 text-left font-semibold text-neutral-900">Vehicle Title</th>
+                    <th className="px-2 py-3 text-left font-semibold text-neutral-900">Stock Number</th>
+                    <th className="px-2 py-3 text-left font-semibold text-neutral-900">Miles</th>
+                    <th className="px-2 py-3 text-left font-semibold text-neutral-900">URL</th>
+                    <th className="px-2 py-3 text-left font-semibold text-neutral-900">Download</th>
+                    <th className="px-2 py-3"></th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-neutral-100">
+                  {vehicles.map((vehicle, idx) => (
+                    <tr key={vehicle.qr_code_id} className={editIdx === idx ? "bg-neutral-50" : ""}>
+                      {/* QR Code ID column, always same style */}
+                      <td className="px-2 py-1.5 pl-5 align-middle font-semibold text-neutral-700 text-sm text-left">{vehicle.qr_code_id}</td>
+                      {editIdx === idx ? (
+                        <>
+                          <td className="px-2 py-2 ml-12 align-middle text-left">
+                            <input name="title" value={editVehicle.title} onChange={handleEditChange} className="border border-neutral-300 rounded-lg px-2 py-1.5 w-full text-sm font-semibold focus:border-neutral-500 focus:ring-1 focus:ring-neutral-500 transition" />
+                          </td>
+                          <td className="px-2 py-2 align-middle text-left">
+                            <input name="stock" value={editVehicle.stock} onChange={handleEditChange} className="border border-neutral-300 rounded-lg px-2 py-1.5 w-full text-sm text-neutral-700 focus:border-neutral-500 focus:ring-1 focus:ring-neutral-500 transition" />
+                          </td>
+                          <td className="px-2 py-2 align-middle text-left">
+                            <input name="miles" value={editVehicle.miles} onChange={handleEditChange} className="border border-neutral-300 rounded-lg px-2 py-1.5 w-full text-sm text-neutral-700 focus:border-neutral-500 focus:ring-1 focus:ring-neutral-500 transition" />
+                          </td>
+                          <td className="px-2 py-2 align-middle text-left">
+                            <input name="url" value={editVehicle.url} onChange={handleEditChange} className="border border-neutral-300 rounded-lg px-2 py-1.5 w-full text-sm text-blue-700 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition" />
+                          </td>
+                          <td className="px-4 py-2 align-middle w-20 pl-6">
+                            <div className="flex justify-center items-center w-full">
+                              <button onClick={() => handleDownloadClick(idx)} className="p-1" title="Download">
+                                <FiDownload size={18} className="text-black" />
+                              </button>
+                            </div>
+                          </td>
+                          <td className="px-4 py-1.5 align-middle text-right">
+                            <div className="flex gap-2 items-center justify-end">
+                              <button onClick={handleEditSave} className="px-3 py-1.5 rounded-lg bg-green-100 text-green-700 font-semibold text-xs hover:bg-green-200 transition">Save</button>
+                              <button onClick={handleEditCancel} className="px-3 py-1.5 rounded-lg bg-neutral-100 text-neutral-700 font-semibold text-xs hover:bg-neutral-200 transition">Cancel</button>
+                            </div>
+                          </td>
+                        </>
+                      ) : (
+                        <>
+                          <td className="px-2 py-3 font-semibold text-neutral-900 text-left">{vehicle.title}</td>
+                          <td className="px-2 py-3 text-neutral-400 text-left">{vehicle.stock}</td>
+                          <td className="px-2 py-3 text-neutral-400 text-left">{vehicle.miles}</td>
+                          <td className="px-2 py-3 text-blue-600 underline max-w-[140px] truncate text-left">
+                            <a href={vehicle.url} target="_blank" rel="noopener noreferrer" title={vehicle.url}>{vehicle.url}</a>
+                          </td>
+                          <td className="px-2 py-3 align-middle w-20 pl-2">
+                            <div className="flex justify-center items-center w-full">
+                              <button onClick={() => handleDownloadClick(idx)} className="p-1" title="Download">
+                                <FiDownload size={18} className="text-black" />
+                              </button>
+                            </div>
+                          </td>
+                          <td className="px-2 py-3 text-right flex gap-6 justify-end pr-4">
+                            <button onClick={() => handleEdit(idx)} className="text-neutral-900 font-semibold hover:text-neutral-700 transition-colors pt-1">Edit</button>
+                            <button onClick={() => handleDelete(idx)} className="text-red-600 font-semibold hover:text-red-800 transition-colors pr-2 pt-1">Delete</button>
+                          </td>
+                        </>
+                      )}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </main>
+
+      {/* Add Vehicle Modal */}
+      <Dialog open={modalOpen} onClose={handleModalCancel} as={Fragment}>
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          <Dialog.Panel className="bg-white border border-neutral-200 rounded-2xl p-6 w-full max-w-sm shadow-2xl">
+            <Dialog.Title className="text-base font-bold mb-3 text-neutral-900">Add Vehicle</Dialog.Title>
+            <div className="space-y-3">
+              <div>
+                <label className="block text-xs font-medium mb-1 text-neutral-700">Vehicle Title</label>
+                <input name="title" value={newVehicle.title} onChange={handleModalChange} className="border border-neutral-300 rounded-lg px-2 py-1.5 w-full text-sm focus:border-neutral-500 focus:ring-1 focus:ring-neutral-500 transition" />
+              </div>
+              <div>
+                <label className="block text-xs font-medium mb-1 text-neutral-700">Stock Number</label>
+                <input name="stock" value={newVehicle.stock} onChange={handleModalChange} className="border border-neutral-300 rounded-lg px-2 py-1.5 w-full text-sm focus:border-neutral-500 focus:ring-1 focus:ring-neutral-500 transition" />
+              </div>
+              <div>
+                <label className="block text-xs font-medium mb-1 text-neutral-700">Miles</label>
+                <input name="miles" value={newVehicle.miles} onChange={handleModalChange} className="border border-neutral-300 rounded-lg px-2 py-1.5 w-full text-sm focus:border-neutral-500 focus:ring-1 focus:ring-neutral-500 transition" />
+              </div>
+              <div>
+                <label className="block text-xs font-medium mb-1 text-neutral-700">URL</label>
+                <input name="url" value={newVehicle.url} onChange={handleModalChange} className="border border-neutral-300 rounded-lg px-2 py-1.5 w-full text-sm focus:border-neutral-500 focus:ring-1 focus:ring-neutral-500 transition" />
+              </div>
+            </div>
+            <div className="flex justify-end gap-2 mt-5">
+              <button onClick={handleModalCancel} className="px-3 py-1.5 rounded-lg bg-neutral-100 text-neutral-700 font-semibold text-sm hover:bg-neutral-200 transition">Cancel</button>
+              <button
+                onClick={handleAddVehicle}
+                disabled={isAddDisabled}
+                className={`px-3 py-1.5 rounded-lg bg-neutral-900 text-white font-semibold text-sm hover:bg-neutral-800 transition ${isAddDisabled ? 'opacity-50 cursor-not-allowed' : ''}`}
+              >
+                Add
+              </button>
+            </div>
+          </Dialog.Panel>
+        </div>
+      </Dialog>
+
+      {/* Delete Vehicle Modal */}
+      <Dialog open={deleteModalOpen} onClose={cancelDelete} as={Fragment}>
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          <Dialog.Panel className="bg-white border border-neutral-200 rounded-2xl p-6 w-full max-w-sm shadow-2xl">
+            <Dialog.Title className="text-base font-bold mb-3 text-neutral-900">Delete Vehicle</Dialog.Title>
+            <div className="mb-4 text-sm text-neutral-700">Are you sure you want to delete this vehicle? This action cannot be undone.</div>
+            <div className="flex justify-end gap-2 mt-5">
+              <button onClick={cancelDelete} className="px-3 py-1.5 rounded-lg bg-neutral-100 text-neutral-700 font-semibold text-sm hover:bg-neutral-200 transition">Cancel</button>
+              <button onClick={confirmDelete} className="px-3 py-1.5 rounded-lg bg-red-600 text-white font-semibold text-sm hover:bg-red-700 transition">Delete</button>
+            </div>
+          </Dialog.Panel>
+        </div>
+      </Dialog>
+
+      {/* Print Format Modal */}
+      <Dialog open={printModalIdx !== null} onClose={closePrintModal} as={Fragment}>
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          <Dialog.Panel className="bg-white border border-neutral-200 rounded-2xl p-6 w-full max-w-sm shadow-2xl">
+            <Dialog.Title className="text-base font-bold mb-3 text-neutral-900">Print Format</Dialog.Title>
+            <div className="flex gap-4 mb-6">
+              <button
+                onClick={() => handleFormatSelect('Small')}
+                className={`px-4 py-2 rounded-lg font-semibold text-sm border transition ${printFormat === 'Small' ? 'bg-neutral-900 text-white border-neutral-900' : 'bg-neutral-100 text-neutral-900 border-neutral-200 hover:bg-neutral-200'}`}
+              >
+                Small
+              </button>
+              <button
+                onClick={() => handleFormatSelect('Large')}
+                className={`px-4 py-2 rounded-lg font-semibold text-sm border transition ${printFormat === 'Large' ? 'bg-neutral-900 text-white border-neutral-900' : 'bg-neutral-100 text-neutral-900 border-neutral-200 hover:bg-neutral-200'}`}
+              >
+                Large
+              </button>
+            </div>
+            <div className="flex justify-end">
+              <button onClick={handleDownload} className="px-4 py-2 rounded-lg bg-neutral-900 text-white font-semibold text-sm hover:bg-neutral-800 transition">Download</button>
+            </div>
+          </Dialog.Panel>
+        </div>
+      </Dialog>
+    </div>
+  );
+} 
