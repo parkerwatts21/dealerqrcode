@@ -9,17 +9,25 @@ import { supabase } from '@/lib/supabase';
 import { FiDownload } from 'react-icons/fi';
 import QRCode from 'qrcode';
 
+interface Vehicle {
+  qr_code_id: string;
+  user_id: string;
+  title: string;
+  stock: string;
+  miles: string;
+  url: string;
+}
+
 export default function Dashboard() {
   const { user, signOut } = useAuth();
   const router = useRouter();
   const [dropdownOpen, setDropdownOpen] = useState(false);
-  const profileRef = useRef(null);
+  const profileRef = useRef<HTMLDivElement>(null);
 
   // Vehicle state
-  const [vehicles, setVehicles] = useState<any[]>([]);
-  const [loadingVehicles, setLoadingVehicles] = useState(true);
+  const [vehicles, setVehicles] = useState<Vehicle[]>([]);
   const [editIdx, setEditIdx] = useState<number | null>(null);
-  const [editVehicle, setEditVehicle] = useState<any>(null);
+  const [editVehicle, setEditVehicle] = useState<Vehicle | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
   const [newVehicle, setNewVehicle] = useState({ title: '', stock: '', miles: '', url: '' });
   const [deleteIdx, setDeleteIdx] = useState<number | null>(null);
@@ -37,14 +45,12 @@ export default function Dashboard() {
   useEffect(() => {
     if (!user) return;
     const fetchVehicles = async () => {
-      setLoadingVehicles(true);
       const { data, error } = await supabase
         .from('vehicles')
         .select('*')
         .eq('user_id', user.id)
         .order('created_at', { ascending: true });
       if (!error) setVehicles(data || []);
-      setLoadingVehicles(false);
     };
     fetchVehicles();
   }, [user]);
@@ -62,7 +68,7 @@ export default function Dashboard() {
   // Close dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (profileRef.current && !(profileRef.current as any).contains(event.target)) {
+      if (profileRef.current && !profileRef.current.contains(event.target as Node)) {
         setDropdownOpen(false);
       }
     };
@@ -75,28 +81,28 @@ export default function Dashboard() {
     return null;
   }
 
-  // Get user's initials for avatar
-  const getInitials = (name: string) => {
-    return name
-      .split(' ')
-      .map(word => word[0])
-      .join('')
-      .toUpperCase();
-  };
-
   const userName = user.user_metadata?.full_name || user.email?.split('@')[0] || 'User';
-  const initials = getInitials(userName);
 
   // Edit handlers
   const handleEdit = (idx: number) => {
     setEditIdx(idx);
-    setEditVehicle({ ...vehicles[idx] });
+    // Ensure all fields are present for Vehicle
+    const v = vehicles[idx];
+    setEditVehicle({
+      qr_code_id: v.qr_code_id,
+      user_id: v.user_id,
+      title: v.title,
+      stock: v.stock,
+      miles: v.miles,
+      url: v.url,
+    });
   };
   const handleEditChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!editVehicle) return;
     setEditVehicle({ ...editVehicle, [e.target.name]: e.target.value });
   };
   const handleEditSave = async () => {
-    if (!user || !editVehicle.qr_code_id) return;
+    if (!user || !editVehicle || !editVehicle.qr_code_id) return;
     const { data, error } = await supabase
       .from('vehicles')
       .update({
@@ -271,6 +277,8 @@ export default function Dashboard() {
             <img 
               src={`https://ui-avatars.com/api/?name=${encodeURIComponent(userName)}&background=000000&color=ffffff&size=64`} 
               alt={userName} 
+              width={36}
+              height={36}
               className="w-9 h-9 rounded-full border-2 border-white" 
             />
             <span className="text-neutral-900 font-semibold text-sm">{userName}</span>
@@ -318,16 +326,16 @@ export default function Dashboard() {
                       {editIdx === idx ? (
                         <>
                           <td className="px-2 py-2 ml-12 align-middle text-left">
-                            <input name="title" value={editVehicle.title} onChange={handleEditChange} className="border border-neutral-300 rounded-lg px-2 py-1.5 w-full text-sm font-semibold focus:border-neutral-500 focus:ring-1 focus:ring-neutral-500 transition" />
+                            <input name="title" value={editVehicle?.title ?? ''} onChange={handleEditChange} className="border border-neutral-300 rounded-lg px-2 py-1.5 w-full text-sm font-semibold focus:border-neutral-500 focus:ring-1 focus:ring-neutral-500 transition" />
                           </td>
                           <td className="px-2 py-2 align-middle text-left">
-                            <input name="stock" value={editVehicle.stock} onChange={handleEditChange} className="border border-neutral-300 rounded-lg px-2 py-1.5 w-full text-sm text-neutral-700 focus:border-neutral-500 focus:ring-1 focus:ring-neutral-500 transition" />
+                            <input name="stock" value={editVehicle?.stock ?? ''} onChange={handleEditChange} className="border border-neutral-300 rounded-lg px-2 py-1.5 w-full text-sm text-neutral-700 focus:border-neutral-500 focus:ring-1 focus:ring-neutral-500 transition" />
                           </td>
                           <td className="px-2 py-2 align-middle text-left">
-                            <input name="miles" value={editVehicle.miles} onChange={handleEditChange} className="border border-neutral-300 rounded-lg px-2 py-1.5 w-full text-sm text-neutral-700 focus:border-neutral-500 focus:ring-1 focus:ring-neutral-500 transition" />
+                            <input name="miles" value={editVehicle?.miles ?? ''} onChange={handleEditChange} className="border border-neutral-300 rounded-lg px-2 py-1.5 w-full text-sm text-neutral-700 focus:border-neutral-500 focus:ring-1 focus:ring-neutral-500 transition" />
                           </td>
                           <td className="px-2 py-2 align-middle text-left">
-                            <input name="url" value={editVehicle.url} onChange={handleEditChange} className="border border-neutral-300 rounded-lg px-2 py-1.5 w-full text-sm text-blue-700 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition" />
+                            <input name="url" value={editVehicle?.url ?? ''} onChange={handleEditChange} className="border border-neutral-300 rounded-lg px-2 py-1.5 w-full text-sm text-blue-700 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition" />
                           </td>
                           <td className="px-4 py-2 align-middle w-20 pl-6">
                             <div className="flex justify-center items-center w-full">

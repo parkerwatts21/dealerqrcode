@@ -1,12 +1,13 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useParams } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import Image from 'next/image';
 
-export default function DynamicQRRedirect({ params }: { params: { qr_code_id: string } }) {
-  const router = useRouter();
+export default function DynamicQRRedirect() {
+  const params = useParams();
+  const qr_code_id = typeof params.qr_code_id === 'string' ? params.qr_code_id : Array.isArray(params.qr_code_id) ? params.qr_code_id[0] : '';
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -14,7 +15,7 @@ export default function DynamicQRRedirect({ params }: { params: { qr_code_id: st
     const fetchAndRedirect = async () => {
       try {
         // Fetch the vehicle data from Supabase
-        const qrCodeId = params.qr_code_id.toUpperCase();
+        const qrCodeId = qr_code_id.toUpperCase();
         const { data, error } = await supabase
           .from('vehicles')
           .select('url')
@@ -27,7 +28,7 @@ export default function DynamicQRRedirect({ params }: { params: { qr_code_id: st
         }
 
         if (!data || !data.url) {
-          console.log('No vehicle found for QR code:', params.qr_code_id);
+          console.log('No vehicle found for QR code:', qrCodeId);
           setError('Invalid QR code');
           setLoading(false);
           return;
@@ -43,13 +44,13 @@ export default function DynamicQRRedirect({ params }: { params: { qr_code_id: st
       }
     };
 
-    if (params.qr_code_id) {
+    if (qr_code_id) {
       fetchAndRedirect();
     } else {
       setError('Invalid QR code');
       setLoading(false);
     }
-  }, [params.qr_code_id]);
+  }, [qr_code_id]);
 
   if (loading) {
     return (

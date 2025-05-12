@@ -1,5 +1,6 @@
 import React from 'react'
 import Link from 'next/link'
+import Image from 'next/image'
 
 export function Hero() {
   return (
@@ -51,9 +52,11 @@ export function Hero() {
               >
                 <source src="/videos/demo.mp4" type="video/mp4" />
                 {/* Fallback to image if video isn't supported */}
-                <img 
+                <Image 
                   src="/images/dashboard-preview.jpg" 
                   alt="Dealer QRCode dashboard preview"
+                  width={800}
+                  height={400}
                   className="w-full"
                 />
               </video>
