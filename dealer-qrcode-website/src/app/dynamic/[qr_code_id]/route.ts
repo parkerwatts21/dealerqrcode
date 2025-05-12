@@ -10,7 +10,7 @@ export async function GET(request: Request) {
   try {
     // Get the qr_code_id from the URL
     const url = new URL(request.url);
-    const qrCodeId = url.pathname.split('/')[3].toUpperCase();
+    const qrCodeId = url.pathname.split('/')[2].toUpperCase();
 
     // Fetch the vehicle data from Supabase
     const { data, error } = await supabase
