@@ -8,6 +8,7 @@ import { Dialog } from '@headlessui/react';
 import { supabase } from '@/lib/supabase';
 import { FiDownload } from 'react-icons/fi';
 import QRCode from 'qrcode';
+import html2canvas from 'html2canvas-pro';
 
 interface Vehicle {
   qr_code_id: string;
@@ -35,6 +36,7 @@ export default function Dashboard() {
   const [printModalIdx, setPrintModalIdx] = useState<number | null>(null);
   const [printFormat, setPrintFormat] = useState<'Small' | 'Large'>('Small');
   const [printPosition, setPrintPosition] = useState(1); // 1-4 for quadrant
+  const previewRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (!user) {
@@ -197,51 +199,106 @@ export default function Dashboard() {
   const handleFormatSelect = (format: 'Small' | 'Large') => {
     setPrintFormat(format);
   };
+
+  // Helper for truncating title (from extension)
+  const truncateTitle = (title: string) => {
+    const maxLength = 36;
+    return title.length > maxLength ? title.substring(0, maxLength) : title;
+  };
+
+  // --- PDF/IMAGE GENERATION LOGIC (from extension) ---
   const handleDownload = async () => {
     if (printModalIdx === null) {
       console.error('No vehicle selected for download');
       return;
     }
-    
     const vehicle = vehicles[printModalIdx];
-    if (!vehicle || !vehicle.qr_code_id) {
-      console.error('Invalid vehicle data:', vehicle);
-      alert('Error: Invalid vehicle data');
-      return;
-    }
+    if (!vehicle) return;
 
-    const qrCodeUrl = `https://dealerqrcode.com/dynamic/${vehicle.qr_code_id}`;
-    console.log('Generating QR code for URL:', qrCodeUrl);
-    
-    try {
-      // Generate QR code as data URL
-      const qrCodeDataUrl = await QRCode.toDataURL(qrCodeUrl, {
-        width: printFormat === 'Small' ? 300 : 600,
-        margin: 1,
-        color: {
-          dark: '#000000',
-          light: '#ffffff'
+    setTimeout(async () => {
+      if (!previewRef.current) {
+        alert('Error: Could not capture preview.');
+        return;
+      }
+      try {
+        // Create a canvas for the full page (8.5 x 11 inches at 300 DPI)
+        const fullCanvas = document.createElement('canvas');
+        const dpi = 300;
+        fullCanvas.width = 8.5 * dpi;
+        fullCanvas.height = 11 * dpi;
+        const fullCtx = fullCanvas.getContext('2d');
+        if (!fullCtx) throw new Error('Could not get canvas context');
+        fullCtx.fillStyle = 'white';
+        fullCtx.fillRect(0, 0, fullCanvas.width, fullCanvas.height);
+
+        // Capture the preview
+        const previewCanvas = await html2canvas(previewRef.current, {
+          scale: 4,
+          useCORS: true,
+          backgroundColor: null,
+          logging: false,
+        });
+
+        let x = 0, y = 0, scaledWidth = 0, scaledHeight = 0;
+        if (printFormat === 'Large') {
+          // Fill the printable area (centered, scaled up) with smaller margin
+          const pageMargin = 0.2 * dpi; // 0.2 inch margin
+          scaledWidth = fullCanvas.width - 2 * pageMargin;
+          scaledHeight = fullCanvas.height - 2 * pageMargin;
+          x = pageMargin;
+          y = pageMargin;
+        } else {
+          // Quadrant logic (matches extension)
+          const pageMargin = 0.5 * dpi;
+          const usableWidth = fullCanvas.width - (2 * pageMargin);
+          const usableHeight = fullCanvas.height - (2 * pageMargin);
+          const quadrantWidth = 3.75 * dpi;
+          const quadrantHeight = 5 * dpi;
+          const remainingWidth = usableWidth - (2 * quadrantWidth);
+          const remainingHeight = usableHeight - (2 * quadrantHeight);
+          const horizontalSpacing = remainingWidth / 3;
+          const verticalSpacing = remainingHeight / 3;
+          const leftQuadrantOffset = -0.228 * dpi;
+          const rightQuadrantOffset = 0.228 * dpi;
+          switch (printPosition) {
+            case 1:
+              x = pageMargin + horizontalSpacing + leftQuadrantOffset;
+              y = pageMargin + verticalSpacing;
+              break;
+            case 2:
+              x = pageMargin + quadrantWidth + (2 * horizontalSpacing) + rightQuadrantOffset;
+              y = pageMargin + verticalSpacing;
+              break;
+            case 3:
+              x = pageMargin + horizontalSpacing + leftQuadrantOffset;
+              y = pageMargin + quadrantHeight + (2 * verticalSpacing);
+              break;
+            case 4:
+              x = pageMargin + quadrantWidth + (2 * horizontalSpacing) + rightQuadrantOffset;
+              y = pageMargin + quadrantHeight + (2 * verticalSpacing);
+              break;
+          }
+          scaledWidth = 3.75 * dpi;
+          scaledHeight = 5 * dpi;
         }
-      });
-      console.log('QR code generated successfully');
-
-      // Create a temporary link element
-      const link = document.createElement('a');
-      link.href = qrCodeDataUrl;
-      link.download = `qr-code-${vehicle.qr_code_id}-${printFormat.toLowerCase()}.png`;
-      console.log('Downloading file:', link.download);
-      
-      // Append to body, click, and remove
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      
-      console.log('Download initiated');
-      closePrintModal();
-    } catch (error) {
-      console.error('Error generating QR code:', error);
-      alert('Error generating QR code. Please try again.');
-    }
+        fullCtx.save();
+        fullCtx.drawImage(previewCanvas, x, y, scaledWidth, scaledHeight);
+        fullCtx.restore();
+        const jpegData = fullCanvas.toDataURL('image/jpeg', 1.0);
+        const downloadLink = document.createElement('a');
+        const filename = vehicle?.title
+          ? `${vehicle.title.replace(/[^a-z0-9]/gi, "-").toLowerCase()}_${vehicle.stock || "000000"}.jpg`
+          : "qr_code.jpg";
+        downloadLink.href = jpegData;
+        downloadLink.download = filename;
+        document.body.appendChild(downloadLink);
+        downloadLink.click();
+        document.body.removeChild(downloadLink);
+        closePrintModal();
+      } catch (error) {
+        alert('Error generating JPEG. Please try again.');
+      }
+    }, 100);
   };
 
   const isAddDisabled = !newVehicle.title || !newVehicle.stock || !newVehicle.miles || !newVehicle.url;
@@ -488,6 +545,61 @@ export default function Dashboard() {
           </Dialog.Panel>
         </div>
       </Dialog>
+
+      {/* Hidden Preview for PDF/Print Generation */}
+      <div style={{ position: 'absolute', left: '-9999px', top: 0 }}>
+        <div
+          ref={previewRef}
+          className="bg-white text-black rounded-lg p-6 w-[375px] mx-auto shadow-md"
+          style={{ aspectRatio: '4/5' }}
+        >
+          {/* Vehicle Title */}
+          <h2 className="text-[16px] font-bold text-center leading-tight mb-1">{truncateTitle(vehicles[printModalIdx || 0]?.title || '') || 'Vehicle Title'}</h2>
+          {/* Stock & Miles on same line */}
+          <div className="text-center">
+            <span className="font-bold text-[12px]">STOCK #:</span> <span className="text-[12px]">{vehicles[printModalIdx || 0]?.stock || ''}</span>
+            <span className="mx-2"></span>
+            <span className="font-bold text-[12px]">MILES:</span> <span className="text-[12px]">{vehicles[printModalIdx || 0]?.miles || '0'}</span>
+          </div>
+          {/* I'M FOR SALE text */}
+          <div className="text-center mt-[-6px]">
+            <div className="text-[42px]">I'M FOR SALE</div>
+          </div>
+          {/* SCAN ME text */}
+          <div className="text-center mt-[-20px] mb-[-12px]">
+            <div className="text-[42px]">SCAN ME</div>
+          </div>
+          {/* QR Code Container */}
+          <div className="relative w-full flex justify-center">
+            <div className="p-3 flex justify-center items-center w-56 h-56">
+              <div className="flex justify-center items-center w-full h-full">
+                <img 
+                  src={`https://api.qrserver.com/v1/create-qr-code/?data=${encodeURIComponent('https://dealerqrcode.com/dynamic/' + (vehicles[printModalIdx || 0]?.qr_code_id || ''))}&size=210x210&format=png`} 
+                  alt="QR Code" 
+                  width="210" 
+                  height="210" 
+                  className="max-w-full max-h-full"
+                />
+              </div>
+            </div>
+          </div>
+          {/* Dealer Name or Logo */}
+          <div className="justify-center text-center mx-auto w-fit mt-[-75px] mb-[-95px]">
+            <img 
+              src="/IMG_2491.PNG" 
+              alt="Dealer Logo" 
+              className="h-64 w-auto object-contain mx-auto"
+              onError={(e) => {
+                e.currentTarget.style.display = 'none';
+                const fallback = document.createElement('span');
+                fallback.textContent = vehicles[printModalIdx || 0]?.dealer || 'Company Name';
+                fallback.className = 'text-[24px] font-black';
+                e.currentTarget.parentNode.appendChild(fallback);
+              }}
+            />
+          </div>
+        </div>
+      </div>
     </div>
   );
 } 
