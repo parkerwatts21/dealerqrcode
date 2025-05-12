@@ -7,7 +7,6 @@ import { useRouter } from 'next/navigation';
 import { Dialog } from '@headlessui/react';
 import { supabase } from '@/lib/supabase';
 import { FiDownload } from 'react-icons/fi';
-import QRCode from 'qrcode';
 import html2canvas from 'html2canvas-pro';
 
 interface Vehicle {
@@ -17,10 +16,11 @@ interface Vehicle {
   stock: string;
   miles: string;
   url: string;
+  dealer?: string;
 }
 
 export default function Dashboard() {
-  const { user, signOut } = useAuth();
+  const { user, loading, signOut } = useAuth();
   const router = useRouter();
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const profileRef = useRef<HTMLDivElement>(null);
@@ -39,10 +39,10 @@ export default function Dashboard() {
   const previewRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (!user) {
+    if (!loading && !user) {
       router.push('/signin');
     }
-  }, [user, router]);
+  }, [user, loading, router]);
 
   // Fetch vehicles for current user
   useEffect(() => {
@@ -80,6 +80,17 @@ export default function Dashboard() {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
+  if (loading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-neutral-50">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-neutral-900 mx-auto"></div>
+          <p className="mt-4 text-neutral-600">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
   if (!user) {
     return null;
   }
@@ -98,6 +109,7 @@ export default function Dashboard() {
       stock: v.stock,
       miles: v.miles,
       url: v.url,
+      dealer: v.dealer,
     });
   };
   const handleEditChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -112,7 +124,8 @@ export default function Dashboard() {
         title: editVehicle.title,
         stock: editVehicle.stock,
         miles: editVehicle.miles,
-        url: editVehicle.url
+        url: editVehicle.url,
+        dealer: editVehicle.dealer,
       })
       .eq('qr_code_id', editVehicle.qr_code_id)
       .eq('user_id', user.id)
@@ -295,7 +308,7 @@ export default function Dashboard() {
         downloadLink.click();
         document.body.removeChild(downloadLink);
         closePrintModal();
-      } catch (error) {
+      } catch {
         alert('Error generating JPEG. Please try again.');
       }
     }, 100);
@@ -332,6 +345,7 @@ export default function Dashboard() {
             onClick={() => setDropdownOpen((open) => !open)}
             tabIndex={0}
           >
+            {/* eslint-disable-next-line @next/next/no-img-element */}
             <img 
               src={`https://ui-avatars.com/api/?name=${encodeURIComponent(userName)}&background=000000&color=ffffff&size=64`} 
               alt={userName} 
@@ -563,7 +577,7 @@ export default function Dashboard() {
           </div>
           {/* I'M FOR SALE text */}
           <div className="text-center mt-[-6px]">
-            <div className="text-[42px]">I'M FOR SALE</div>
+            <div className="text-[42px]">I&apos;M FOR SALE</div>
           </div>
           {/* SCAN ME text */}
           <div className="text-center mt-[-20px] mb-[-12px]">
@@ -573,6 +587,7 @@ export default function Dashboard() {
           <div className="relative w-full flex justify-center">
             <div className="p-3 flex justify-center items-center w-56 h-56">
               <div className="flex justify-center items-center w-full h-full">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img 
                   src={`https://api.qrserver.com/v1/create-qr-code/?data=${encodeURIComponent('https://dealerqrcode.com/dynamic/' + (vehicles[printModalIdx || 0]?.qr_code_id || ''))}&size=210x210&format=png`} 
                   alt="QR Code" 
@@ -585,6 +600,7 @@ export default function Dashboard() {
           </div>
           {/* Dealer Name or Logo */}
           <div className="justify-center text-center mx-auto w-fit mt-[-75px] mb-[-95px]">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
             <img 
               src="/IMG_2491.PNG" 
               alt="Dealer Logo" 
@@ -594,7 +610,9 @@ export default function Dashboard() {
                 const fallback = document.createElement('span');
                 fallback.textContent = vehicles[printModalIdx || 0]?.dealer || 'Company Name';
                 fallback.className = 'text-[24px] font-black';
-                e.currentTarget.parentNode.appendChild(fallback);
+                if (e.currentTarget.parentNode) {
+                  e.currentTarget.parentNode.appendChild(fallback);
+                }
               }}
             />
           </div>

@@ -6,12 +6,11 @@ const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
 const supabase = createClient(supabaseUrl, supabaseKey);
 
-export async function GET(
-  request: Request,
-  { params }: { params: { qr_code_id: string } }
-) {
+export async function GET(request: Request) {
   try {
-    const qrCodeId = params.qr_code_id.toUpperCase();
+    // Get the qr_code_id from the URL
+    const url = new URL(request.url);
+    const qrCodeId = url.pathname.split('/')[3].toUpperCase();
 
     // Fetch the vehicle data from Supabase
     const { data, error } = await supabase
@@ -60,4 +59,4 @@ export async function GET(
       }
     );
   }
-} 
+}
